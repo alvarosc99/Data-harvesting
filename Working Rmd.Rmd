@@ -50,10 +50,5 @@ token <- request(spo_token) %>%
   req_headers('Content-Type' = 'application/x-www-form-urlencoded') %>% 
   req_dry_run
 
-token2 <- token %>% 
-  resp_body_html()
-
-token2 %>% 
-  xml_text()
 ```
 
