@@ -1,0 +1,27 @@
+---
+title: "Working Rmd"
+author: '100385774'
+date: "2023-03-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction and objectives
+(Introducir, explicar qué vamos a sacar, etc.)
+
+# Scraping
+
+```{r}
+library(tidyverse)
+library(httr2)
+library(ggplot2)
+library(jsonlite)
+```
+
+
+## API authentication
+
+
