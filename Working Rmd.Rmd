@@ -19,9 +19,41 @@ library(tidyverse)
 library(httr2)
 library(ggplot2)
 library(jsonlite)
+library(xml2)
 ```
 
 
 ## API authentication
 
+### Set the credentials
+
+```{r}
+CLIENT_ID <- "d1552a9b168446f49583043fed2ae16e"
+CLIENT_SECRET <- "baeda3593af24234a8aea32e5c22fa48"
+```
+
+### Setting the endpoints
+
+```{r}
+
+spo_gen <- "https://api.spotify.com/v1"
+spo_token <- "https://accounts.spotify.com/api/token"
+redirect <- "http://aulaglobal.uc3m.es"
+
+```
+
+
+```{r}
+token <- request(spo_token) %>% 
+  req_body_form(grant_type = 'client_credentials') %>% 
+  req_headers(Authorization = 'Basic <base64 encoded d1552a9b168446f49583043fed2ae16e:baeda3593af24234a8aea32e5c22fa48') %>% 
+  req_headers('Content-Type' = 'application/x-www-form-urlencoded') %>% 
+  req_dry_run
+
+token2 <- token %>% 
+  resp_body_html()
+
+token2 %>% 
+  xml_text()
+```
 
