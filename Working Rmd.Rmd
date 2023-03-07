@@ -23,7 +23,7 @@ library(jsonlite)
 library(xml2)
 
 set_config(
-  user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0; Álvaro Sanz / 100385774@alumnos.uc3m.es")
+  user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0; Alvaro Sanz / 100385774@alumnos.uc3m.es")
 )
 ```
 
@@ -44,8 +44,6 @@ CLIENT_SECRET <- "baeda3593af24234a8aea32e5c22fa48"
 spo_gen <- "https://api.spotify.com/v1"
 spo_token <- "https://accounts.spotify.com/api/token"
 
-print(fulltoken)
-fulltoken <- "BQC6k3tMXeBdQHNXdfU4YlFQKiHmh9FJfDqvQe_A7TL4WN-XNCw1imD4XmFusVUDitziHZYOz2mi8U66TLln0CCsq5B_4dSVuDbAbdHXJUuErUlZkUhC"
 ```
 
 ### Token try httr2
@@ -83,15 +81,71 @@ Available markets example:
 ```{r}
 
 req <- request(spo_gen) %>% 
-  req_auth_bearer_token(fulltoken) %>% 
+  req_auth_bearer_token(fulltoken) 
+
+markets <- req %>% 
   req_url_path_append("markets") %>% 
   req_perform()
 
-req %>% 
+markets %>% 
   resp_body_json() %>% 
   as.tibble() %>% 
   unnest()
 
 ```
+
+Track audio features for 1 song: 
+https://open.spotify.com/track/7EAtJk0HzXQp2gpFeaaLzF?si=571207f1c6e043da
+
+```{r}
+features <- req %>% 
+  req_url_path_append("audio-features/7EAtJk0HzXQp2gpFeaaLzF") %>% 
+  req_perform()
+
+features %>% 
+  resp_body_json() %>% 
+  as.tibble()
+```
+
+Track audio features for a playlist: 
+https://open.spotify.com/playlist/4LcLafs4GuCeKABvRMr667?si=48fc12f25ebf4d72
+
+
+```{r}
+
+playlist <- req %>% 
+  req_url_path_append("playlists/4LcLafs4GuCeKABvRMr667/tracks") %>% 
+  req_perform()
+
+resp <- playlist %>% 
+  resp_body_json(simplifyVector = T)
+
+resp$items %>% 
+  select(track) %>% 
+  unnest(cols = track)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
