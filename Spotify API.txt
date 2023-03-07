@@ -34,5 +34,3 @@ https://developer.spotify.com/documentation/web-api/reference/#/
 EXAMPLE OF R USE: 
 https://msmith7161.github.io/what-is-speechiness/
 
-SPOTIFYR: 
-https://www.rcharlie.com/spotifyr/

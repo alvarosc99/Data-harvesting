@@ -17,9 +17,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 library(httr2)
+library(httr)
 library(ggplot2)
 library(jsonlite)
 library(xml2)
+
+set_config(
+  user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0; Álvaro Sanz / 100385774@alumnos.uc3m.es")
+)
 ```
 
 
@@ -38,17 +43,55 @@ CLIENT_SECRET <- "baeda3593af24234a8aea32e5c22fa48"
 
 spo_gen <- "https://api.spotify.com/v1"
 spo_token <- "https://accounts.spotify.com/api/token"
-redirect <- "http://aulaglobal.uc3m.es"
 
+print(fulltoken)
+fulltoken <- "BQC6k3tMXeBdQHNXdfU4YlFQKiHmh9FJfDqvQe_A7TL4WN-XNCw1imD4XmFusVUDitziHZYOz2mi8U66TLln0CCsq5B_4dSVuDbAbdHXJUuErUlZkUhC"
 ```
 
+### Token try httr2
 
 ```{r}
 token <- request(spo_token) %>% 
-  req_body_form(grant_type = 'client_credentials') %>% 
-  req_headers(Authorization = 'Basic <base64 encoded d1552a9b168446f49583043fed2ae16e:baeda3593af24234a8aea32e5c22fa48') %>% 
+  req_user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0; 
+                 Álvaro Sanz / 100385774@alumnos.uc3m.es") %>% 
+  req_headers('Authorization : Basic ZDE1NTJhOWIxNjg0NDZmNDk1ODMwNDNmZWQyYWUxNmU6YmFlZGEzNTkzYWYyNDIzNGE4YWVhMzJlNWMyMmZhNDg=') %>%
   req_headers('Content-Type' = 'application/x-www-form-urlencoded') %>% 
-  req_dry_run
+  req_body_form(grant_type = 'client_credentials') %>% 
+  req_perform()
 
 ```
+
+### Token try httr
+
+```{r}
+token1 <-  POST("https://accounts.spotify.com/api/token",
+  accept_json(),
+  authenticate(CLIENT_ID, CLIENT_SECRET), 
+  body = list(grant_type = 'client_credentials'),
+  encode = 'form',
+  verbose()
+)
+
+token1
+
+fulltoken <-  content(token1)$access_token
+```
+
+### Exploratory analysis
+
+Available markets example: 
+```{r}
+
+req <- request(spo_gen) %>% 
+  req_auth_bearer_token(fulltoken) %>% 
+  req_url_path_append("markets") %>% 
+  req_perform()
+
+req %>% 
+  resp_body_json() %>% 
+  as.tibble() %>% 
+  unnest()
+
+```
+
 
