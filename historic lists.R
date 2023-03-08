@@ -48,14 +48,92 @@ sixties = '37i9dQZF1DXaKIA8E7WcJj'
 
 # Getting playlist 
 
-playlist_tens = paste0('https://api.spotify.com/v1/playlist/', tens) 
+playlist_tens = paste0('https://api.spotify.com/v1/playlists/', tens) 
 
-playlist_zeros = paste0('https://api.spotify.com/v1/playlist/', zeros) 
+playlist_zeros = paste0('https://api.spotify.com/v1/playlists/', zeros) 
 
-playlist_nineties = paste0('https://api.spotify.com/v1/playlist/', nineties) 
+playlist_nineties = paste0('https://api.spotify.com/v1/playlists/', nineties) 
 
-playlist_eighties = paste0('https://api.spotify.com/v1/playlist/', eighties) 
+playlist_eighties = paste0('https://api.spotify.com/v1/playlists/', eighties) 
 
-playlist_seventies = paste0('https://api.spotify.com/v1/playlist/', seventies) 
+playlist_seventies = paste0('https://api.spotify.com/v1/playlists/', seventies) 
 
-playlist_sixties = paste0('https://api.spotify.com/v1/playlist/', sixties)
+playlist_sixties = paste0('https://api.spotify.com/v1/playlists/', sixties)
+
+
+# Request for the 60's
+
+req_60 = request(playlist_sixties) %>% 
+  req_auth_bearer_token(mytoken) %>% 
+  req_perform()
+
+body60 = req_60 %>% 
+  resp_body_json() 
+   
+followers_60 = body60$followers$total
+
+# 70s 
+
+req_70 = request(playlist_seventies) %>% 
+  req_auth_bearer_token(mytoken) %>% 
+  req_perform()
+
+body70 = req_70 %>% 
+  resp_body_json() 
+
+followers_70 = body70$followers$total
+
+# 80s 
+
+req_80 = request(playlist_eighties) %>% 
+  req_auth_bearer_token(mytoken) %>% 
+  req_perform()
+
+body80 = req_80 %>% 
+  resp_body_json() 
+
+followers_80 = body80$followers$total
+
+# 90s 
+
+req_90 = request(playlist_nineties) %>% 
+  req_auth_bearer_token(mytoken) %>% 
+  req_perform()
+
+body90 = req_90 %>% 
+  resp_body_json() 
+
+followers_90 = body90$followers$total
+
+# 00s 
+
+req_00 = request(playlist_zeros) %>% 
+  req_auth_bearer_token(mytoken) %>% 
+  req_perform()
+
+body00 = req_00 %>% 
+  resp_body_json() 
+
+followers_00 = body00$followers$total
+
+# 10s 
+
+req_10 = request(playlist_tens) %>% 
+  req_auth_bearer_token(mytoken) %>% 
+  req_perform()
+
+body10 = req_10 %>% 
+  resp_body_json() 
+
+followers_10 = body10$followers$total
+
+# Creating a dataframe 
+
+decades = c("60s", '70s', '80s', '90s', '00s', '10s')
+followers = c(followers_60, followers_70, followers_80,
+              followers_90, followers_00, followers_90)
+df = data.frame(decades, followers)
+
+ggplot(df) +
+  aes(decades, followers)+
+  geom_col()
