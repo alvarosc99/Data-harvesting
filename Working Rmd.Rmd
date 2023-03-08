@@ -10,19 +10,17 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Introduction and objectives
-
-- Compare the 50 TOP GLOBAL SONGS (weekly playlist) - features: https://open.spotify.com/playlist/37i9dQZEVXbNG2KDcFcKOF?si=3a61996b79fd4698 
-  + regression to see most important factors for popularity
-- Compare the 50 TOP GLOBAL SONGS vs. TOP 50 SPAIN - tracks/artists differences: https://open.spotify.com/playlist/37i9dQZEVXbJwoKy8qKpHG?si=f30d324eb3434c96
-- Compare 4 different countries WEEKLY TOP 50 - features: 
-    - Alemania: https://open.spotify.com/playlist/37i9dQZEVXbK8BKKMArIyl?si=708f7af7c30545a4
+Alvaro: 1-4
+Alex: 5-x
+1. Compare the 50 TOP GLOBAL SONGS (weekly playlist) - features: https://open.spotify.com/playlist/37i9dQZEVXbNG2KDcFcKOF?si=3a61996b79fd4698 
+2. Compare 2 different countries WEEKLY TOP 50 - features: 
     - Colombia: https://open.spotify.com/playlist/37i9dQZEVXbL1Fl8vdBUba?si=6c0379f1a546446c
-    - USA: https://open.spotify.com/playlist/37i9dQZEVXbLp5XoPON0wI?si=d7401e8ce534406a
     - India: https://open.spotify.com/playlist/37i9dQZEVXbMWDif5SCBJq?si=becf0ad688bc4894
-- Variability between GLOBAL DAILY TOP 50 in a week - tracks/artists: https://open.spotify.com/playlist/37i9dQZEVXbMDoHDwVN2tF?si=05a703094b4841be
-- Genre evolution over decades - features:  
-- Artist's evolution over time - features of albums: 
-    - 
+3. Compare TOP 50 from Billboard (Web scraping) vs. TOP 50 from Spotify - track/artists differences
+4. Correlate TOP 50 popularity with YouTube views (web scraping) 
+5. Variability between GLOBAL DAILY TOP 50 in a week - tracks/artists: https://open.spotify.com/playlist/37i9dQZEVXbMDoHDwVN2tF?si=05a703094b4841be
+6. TOP SONGS evolution over decades -  
+7. Artist's evolution over time - 
 
 # Scraping
 
