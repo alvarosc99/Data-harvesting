@@ -101,20 +101,18 @@ top50 <- top50$tracks$items
 top50 <- top50 %>% 
   select(track) %>% 
   unnest(track) %>% 
-  select(c(album, artists, duration_ms, explicit, name, id, popularity, track_number)) 
+  select(c(album, artists, duration_ms, explicit, name, id, popularity)) 
 ```
 
 ```{r}
 top50filtered <- top50 %>% unnest(artists, names_repair = "universal") %>% #Featurings make 2 different cases, for each artist. 
-  select(!c(external_urls, href, type, uri)) %>% 
-  unnest(album, names_repair = "universal") %>% 
-  select(!c(album_type, album_group, total_tracks, artists, type, id...16, uri, available_markets, external_urls, href, id...7, images, is_playable, release_date_precision))
+  select(!c(external_urls, href, type, uri, album))
 
 top50filtered
 ```
 For more precise analysis - each song's features: 
 ```{r}
-songs <- top50filtered$id...21
+songs <- top50filtered$id...11
 ```
 
 ```{r}
@@ -134,7 +132,7 @@ top50songs <- data.frame()
 for(i in 1:length(unique(songs))) { #We set the unique to avoid the features problem. 
   
   song <- req %>% 
-  req_url_path_append(paste("audio-features", songs[i], sep = "/")) %>% 
+  req_url_path_append(paste("audio-features", unique(songs)[i], sep = "/")) %>% 
   req_perform() %>% 
   resp_body_json(simplifyVector = TRUE) %>% 
   as.tibble()
@@ -142,18 +140,127 @@ for(i in 1:length(unique(songs))) { #We set the unique to avoid the features pro
   top50songs <- rbind(song, top50songs)
   
 } 
+
+top50songs
+```
+
+Now, bind a column for each song's name. 
+
+```{r}
+top50ids <- top50filtered %>% 
+  select(c(name...10, id...11)) %>% 
+  distinct(name...10, .keep_all = TRUE) %>% 
+  rename("id" = "id...11")
+```
+
+```{r}
+top50full <- top50songs %>% 
+  full_join(top50ids, by = "id")
+
+top50full
 ```
 
 
+2. Compare 2 different countries WEEKLY TOP 50 - features: 
+    - Colombia: https://open.spotify.com/playlist/37i9dQZEVXbL1Fl8vdBUba?si=6c0379f1a546446c
+    - India: https://open.spotify.com/playlist/37i9dQZEVXbMWDif5SCBJq?si=57eaf0528d76483e
+    
+```{r}
+top50colombia <- "37i9dQZEVXbL1Fl8vdBUba"
+top50india <- "37i9dQZEVXbMWDif5SCBJq"
+```
+    
+## Colombia    
 
+```{r}
+top50col <- req %>% 
+  req_url_path_append(paste("playlists", top50colombia, sep = "/")) %>% 
+  req_perform() %>% 
+  resp_body_json(simplifyVector = T)
 
+top50col <- top50col$tracks$items %>% 
+  select(track) %>% 
+  unnest() %>% 
+  select(c(artists, explicit, duration_ms, name, id, popularity))
 
+colsongs <- top50col$id
+```
 
+```{r}
+top50colsongs <- data.frame()
 
+for(i in 1:length(unique(colsongs))) { #We set the unique to avoid the features problem. 
+  
+  song <- req %>% 
+  req_url_path_append(paste("audio-features", colsongs[i], sep = "/")) %>% 
+  req_perform() %>% 
+  resp_body_json(simplifyVector = TRUE) %>% 
+  as.tibble()
+  
+  top50colsongs <- rbind(song, top50colsongs)
+  
+} 
 
+top50colsongs
+```
 
+```{r}
+top50col <- top50col %>% 
+  select(c(name, id))
+```
 
+```{r}
+top50colfull <- top50col %>% 
+  full_join(top50colsongs, by = "id")
 
+top50colfull
+```
+
+## India
+
+```{r}
+top50ind <- req %>% 
+  req_url_path_append(paste("playlists", top50india, sep = "/")) %>% 
+  req_perform() %>% 
+  resp_body_json(simplifyVector = T)
+
+top50ind <- top50ind$tracks$items %>% 
+  select(track) %>% 
+  unnest() %>% 
+  select(c(artists, explicit, duration_ms, name, id, popularity))
+
+indsongs <- top50ind$id
+```
+
+```{r}
+top50indsongs <- data.frame()
+
+for(i in 1:length(unique(indsongs))) { #We set the unique to avoid the features problem. 
+  
+  song <- req %>% 
+  req_url_path_append(paste("audio-features", indsongs[i], sep = "/")) %>% 
+  req_perform() %>% 
+  resp_body_json(simplifyVector = TRUE) %>% 
+  as.tibble()
+  
+  top50indsongs <- rbind(song, top50indsongs)
+  
+} 
+
+top50indsongs
+```
+
+```{r}
+top50ind <- top50ind %>% 
+  select(c(name, id))
+```
+
+```{r}
+top50indfull <- top50ind %>% 
+  full_join(top50indsongs, by = "id")
+
+top50indfull
+```
 
 
 
