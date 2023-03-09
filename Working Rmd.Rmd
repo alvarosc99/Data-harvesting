@@ -17,7 +17,7 @@ Alex: 5-x
     - Colombia: https://open.spotify.com/playlist/37i9dQZEVXbL1Fl8vdBUba?si=6c0379f1a546446c
     - India: https://open.spotify.com/playlist/37i9dQZEVXbMWDif5SCBJq?si=becf0ad688bc4894
 3. Compare TOP 50 from Billboard (Web scraping) vs. TOP 50 from Spotify - track/artists differences
-4. Correlate TOP 50 popularity with YouTube views (web scraping) 
+4. Correlate TOP 50 GLOBAL popularity with YouTube views (web scraping) 
 5. Variability between GLOBAL DAILY TOP 50 in a week - tracks/artists: https://open.spotify.com/playlist/37i9dQZEVXbMDoHDwVN2tF?si=05a703094b4841be
 6. TOP SONGS evolution over decades -  
 7. Artist's evolution over time - 
@@ -56,19 +56,6 @@ spo_token <- "https://accounts.spotify.com/api/token"
 
 ```
 
-### Token try httr2
-
-```{r}
-token <- request(spo_token) %>% 
-  req_user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0; 
-                 Álvaro Sanz / 100385774@alumnos.uc3m.es") %>% 
-  req_headers('Authorization : Basic ZDE1NTJhOWIxNjg0NDZmNDk1ODMwNDNmZWQyYWUxNmU6YmFlZGEzNTkzYWYyNDIzNGE4YWVhMzJlNWMyMmZhNDg=') %>%
-  req_headers('Content-Type' = 'application/x-www-form-urlencoded') %>% 
-  req_body_form(grant_type = 'client_credentials') %>% 
-  req_perform()
-
-```
-
 ### Token try httr
 
 ```{r}
@@ -85,60 +72,77 @@ token1
 fulltoken <-  content(token1)$access_token
 ```
 
-### Exploratory analysis
-
-Available markets example: 
+### Base req settings:
 ```{r}
-
 req <- request(spo_gen) %>% 
-  req_auth_bearer_token(fulltoken) 
-
-markets <- req %>% 
-  req_url_path_append("markets") %>% 
-  req_perform()
-
-markets %>% 
-  resp_body_json() %>% 
-  as.tibble() %>% 
-  unnest()
-
+  req_auth_bearer_token(fulltoken) %>% 
+  req_retry(max_tries = 3) %>% 
+  req_options(timeout_ms = 10000) %>% 
+  req_throttle(rate = 30 / 60)
 ```
 
-Track audio features for 1 song: 
-https://open.spotify.com/track/7EAtJk0HzXQp2gpFeaaLzF?si=571207f1c6e043da
+# 1. Compare the 50 TOP GLOBAL SONGS (weekly playlist) - features: https://open.spotify.com/playlist/37i9dQZEVXbNG2KDcFcKOF?si=3a61996b79fd4698 
 
 ```{r}
-features <- req %>% 
-  req_url_path_append("audio-features/7EAtJk0HzXQp2gpFeaaLzF") %>% 
-  req_perform()
-
-features %>% 
-  resp_body_json() %>% 
-  as.tibble()
+top50global <- "37i9dQZEVXbNG2KDcFcKOF?si"
 ```
-
-Track audio features for a playlist: 
-https://open.spotify.com/playlist/4LcLafs4GuCeKABvRMr667?si=48fc12f25ebf4d72
 
 
 ```{r}
-
-playlist <- req %>% 
-  req_url_path_append("playlists/4LcLafs4GuCeKABvRMr667/tracks") %>% 
-  req_perform()
-
-resp <- playlist %>% 
+top50 <- req %>% 
+  req_url_path_append(paste("playlists", top50global, sep = "/")) %>% 
+  req_perform() %>% 
   resp_body_json(simplifyVector = T)
 
-resp$items %>% 
+top50
+
+top50 <- top50$tracks$items
+
+top50 <- top50 %>% 
   select(track) %>% 
-  unnest(cols = track)
+  unnest(track) %>% 
+  select(c(album, artists, duration_ms, explicit, name, id, popularity, track_number)) 
 ```
 
+```{r}
+top50filtered <- top50 %>% unnest(artists, names_repair = "universal") %>% #Featurings make 2 different cases, for each artist. 
+  select(!c(external_urls, href, type, uri)) %>% 
+  unnest(album, names_repair = "universal") %>% 
+  select(!c(album_type, album_group, total_tracks, artists, type, id...16, uri, available_markets, external_urls, href, id...7, images, is_playable, release_date_precision))
 
+top50filtered
+```
+For more precise analysis - each song's features: 
+```{r}
+songs <- top50filtered$id...21
+```
 
+```{r}
 
+req %>% 
+  req_url_path_append(paste("audio-features", songs[1], sep = "/")) %>% 
+  req_perform() %>% 
+  resp_body_json(simplifyVector = TRUE) %>% 
+  as.tibble()
 
+```
+
+```{r}
+
+top50songs <- data.frame()
+
+for(i in 1:length(unique(songs))) { #We set the unique to avoid the features problem. 
+  
+  song <- req %>% 
+  req_url_path_append(paste("audio-features", songs[i], sep = "/")) %>% 
+  req_perform() %>% 
+  resp_body_json(simplifyVector = TRUE) %>% 
+  as.tibble()
+  
+  top50songs <- rbind(song, top50songs)
+  
+} 
+```
 
 
 
