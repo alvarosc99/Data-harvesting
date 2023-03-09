@@ -303,6 +303,15 @@ billfilterart <- bill200art[1:50] %>%
   str_remove_all("\t|\n")
 ```
 
+Merging both: 
+```{r}
+billfilter %>% 
+  as.data.frame() %>% 
+  cbind(as.data.frame(billfilterart)) %>% 
+  rename("Artist" = ".",
+         "Track" = "billfilterart") %>% 
+  mutate(position = row_number())
+```
 
 
 
