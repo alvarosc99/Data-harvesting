@@ -31,6 +31,7 @@ library(httr)
 library(ggplot2)
 library(jsonlite)
 library(xml2)
+library(stringr)
 
 set_config(
   user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0; Alvaro Sanz / 100385774@alumnos.uc3m.es")
@@ -260,6 +261,46 @@ top50indfull <- top50ind %>%
   full_join(top50indsongs, by = "id")
 
 top50indfull
+```
+
+3. Compare TOP 50 from Billboard (Web scraping) vs. TOP 50 from Spotify - track/artists differences
+
+
+```{r}
+
+billboard <- "https://www.billboard.com/charts/billboard-global-200/"
+browseURL(billboard)
+```
+
+```{r}
+billboard_raw <- read_html(billboard) %>% 
+  xml_child()
+```
+
+Songs: 
+```{r}
+bill200 <- billboard_raw %>%
+  xml_find_all("//li/ul/li/h3[@id = 'title-of-a-story']")
+```
+
+```{r}
+billfilter <- bill200[1:50] %>% 
+  xml_text() %>% 
+  str_remove_all("\t|\n")
+  
+```
+
+Artists:
+
+```{r}
+bill200art <- billboard_raw %>%
+  xml_find_all("//li/ul/li/span[contains(@class, 'c-label  a-no-trucate a-font-primary')]")
+```
+
+```{r}
+billfilterart <- bill200art[1:50] %>% 
+  xml_text() %>% 
+  str_remove_all("\t|\n")
 ```
 
 
