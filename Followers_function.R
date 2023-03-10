@@ -1,5 +1,19 @@
+# Listas de años: 
+
+tens = '37i9dQZF1DX5Ejj0EkURtP' 
+zeros = '37i9dQZF1DX4o1oenSJRJd'
+nineties = '37i9dQZF1DXbTxeAdrVG2l' 
+eighties = '37i9dQZF1DX4UtSsGT1Sbe'
+seventies = '37i9dQZF1DWTJ7xPn4vNaz' 
+sixties = '37i9dQZF1DXaKIA8E7WcJj'
+
+# Playlists 
+
 API_playlist = 'https://api.spotify.com/v1/playlists/'
 years = c(sixties, seventies, eighties, nineties, zeros, tens)
+
+# The function 
+
 
 followers = function(x) { 
   rt_spotify = paste0(API_playlist, x)
@@ -31,12 +45,19 @@ followers = function(x) {
   }
 
 
-df_followers = lapply(years, followers) 
+followers_list = lapply(years, followers) 
 
+followers_df = do.call(rbind, followers_list) %>% 
+  transmute(
+    playlist = as.character(list), 
+    followers = as.numeric(followers)
+  ) 
 
-df = as.data.frame(df_followers)
+hp = ggplot(followers_df)+
+  aes(playlist, followers)+
+  geom_col()
 
-
+hp
 
 
 
