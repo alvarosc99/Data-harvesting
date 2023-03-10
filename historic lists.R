@@ -21,9 +21,7 @@ response = POST(
 )
 
 response
-
 mytoken = content(response)$access_token
-
 HeaderValue = paste0("Bearer ", mytoken)
 
 
@@ -35,29 +33,20 @@ APIweb = 'https://api.spotify.com/v1/'
 # Listas de años: 
 
 tens = '37i9dQZF1DX5Ejj0EkURtP' 
-
 zeros = '37i9dQZF1DX4o1oenSJRJd'
-
 nineties = '37i9dQZF1DXbTxeAdrVG2l' 
-  
 eighties = '37i9dQZF1DX4UtSsGT1Sbe'
-  
 seventies = '37i9dQZF1DWTJ7xPn4vNaz' 
-  
-sixties = '37i9dQZF1DXaKIA8E7WcJj' 
+sixties = '37i9dQZF1DXaKIA8E7WcJj'
+
 
 # Getting playlist 
 
 playlist_tens = paste0('https://api.spotify.com/v1/playlists/', tens) 
-
 playlist_zeros = paste0('https://api.spotify.com/v1/playlists/', zeros) 
-
 playlist_nineties = paste0('https://api.spotify.com/v1/playlists/', nineties) 
-
 playlist_eighties = paste0('https://api.spotify.com/v1/playlists/', eighties) 
-
 playlist_seventies = paste0('https://api.spotify.com/v1/playlists/', seventies) 
-
 playlist_sixties = paste0('https://api.spotify.com/v1/playlists/', sixties)
 
 
@@ -65,12 +54,27 @@ playlist_sixties = paste0('https://api.spotify.com/v1/playlists/', sixties)
 
 req_60 = request(playlist_sixties) %>% 
   req_auth_bearer_token(mytoken) %>% 
-  req_perform()
+  req_perform() %>% 
+  resp_body_json(simplifyVector = T)
 
-body60 = req_60 %>% 
-  resp_body_json() 
-   
-followers_60 = body60$followers$total
+resp_60_followers = req_60 %>% 
+  enframe() %>% 
+  filter(name == 'followers') %>% 
+  unnest(cols = value) %>% 
+  filter(!value == 'NULL') %>% 
+  select(-name) %>% 
+  rename('followers' = 'value')
+  
+resp_60_name = req_60 %>% 
+  enframe() %>% 
+  filter(name == 'name') %>% 
+  unnest(cols = value) %>% 
+  select(-name) %>% 
+  rename('list' = 'value')
+
+binded = cbind(resp_60_name, resp_60_followers)  
+
+
 
 # 70s 
 
