@@ -16,10 +16,11 @@ Alex: 5-x
 2. Compare 2 different countries WEEKLY TOP 50 - features: 
     - Colombia: https://open.spotify.com/playlist/37i9dQZEVXbL1Fl8vdBUba?si=6c0379f1a546446c
     - India: https://open.spotify.com/playlist/37i9dQZEVXbMWDif5SCBJq?si=becf0ad688bc4894
-3. Compare TOP 50 from Billboard (Web scraping) vs. TOP 50 from Spotify - track/artists differences
-4. Correlate TOP 50 GLOBAL popularity with YouTube views (web scraping) 
-5. Variability between GLOBAL DAILY TOP 50 in a week - tracks/artists: https://open.spotify.com/playlist/37i9dQZEVXbMDoHDwVN2tF?si=05a703094b4841be
-6. TOP SONGS evolution over decades -  
+3. Compare TOP 50 from Billboard (Web scraping) vs. TOP 50 from Spotify - Track/artists differences
+4. Compare Genres Popularity (playlist data): 
+    - 
+5. Variability between GLOBAL DAILY TOP 50 in a week - Tracks/artists: https://open.spotify.com/playlist/37i9dQZEVXbMDoHDwVN2tF?si=05a703094b4841be
+6. TOP SONGS evolution over decades -   
 7. Artist's evolution over time - 
 
 # Scraping
@@ -97,11 +98,11 @@ top50 <- req %>%
 
 top50
 
-top50 <- top50$tracks$items
+top50 <- top50$Tracks$items
 
 top50 <- top50 %>% 
-  select(track) %>% 
-  unnest(track) %>% 
+  select(Track) %>% 
+  unnest(Track) %>% 
   select(c(album, artists, duration_ms, explicit, name, id, popularity)) 
 ```
 
@@ -179,8 +180,8 @@ top50col <- req %>%
   req_perform() %>% 
   resp_body_json(simplifyVector = T)
 
-top50col <- top50col$tracks$items %>% 
-  select(track) %>% 
+top50col <- top50col$Tracks$items %>% 
+  select(Track) %>% 
   unnest() %>% 
   select(c(artists, explicit, duration_ms, name, id, popularity))
 
@@ -225,8 +226,8 @@ top50ind <- req %>%
   req_perform() %>% 
   resp_body_json(simplifyVector = T)
 
-top50ind <- top50ind$tracks$items %>% 
-  select(track) %>% 
+top50ind <- top50ind$Tracks$items %>% 
+  select(Track) %>% 
   unnest() %>% 
   select(c(artists, explicit, duration_ms, name, id, popularity))
 
@@ -263,7 +264,7 @@ top50indfull <- top50ind %>%
 top50indfull
 ```
 
-3. Compare TOP 50 from Billboard (Web scraping) vs. TOP 50 from Spotify - track/artists differences
+3. Compare TOP 50 from Billboard (Web scraping) vs. TOP 50 from Spotify - Track/artists differences
 
 
 ```{r}
@@ -305,18 +306,58 @@ billfilterart <- bill200art[1:50] %>%
 
 Merging both: 
 ```{r}
-billfilter %>% 
+top50billboard <- billfilter %>% 
   as.data.frame() %>% 
   cbind(as.data.frame(billfilterart)) %>% 
-  rename("Artist" = ".",
-         "Track" = "billfilterart") %>% 
-  mutate(position = row_number())
+  rename("Track" = ".",
+         "Artist" = "billfilterart") %>% 
+  mutate(`Billboard Position` = row_number())
+
+top50billboard
 ```
 
+And take the positions from the Spotify Global 50: 
 
+```{r}
+top50positions <- top50filtered %>% 
+  select(c(name...5, name...10)) %>% 
+  distinct(name...10, .keep_all = TRUE) %>% 
+  mutate(`Spotify Position` = row_number()) %>% 
+  rename("Artist" = "name...5", 
+         "Track" = "name...10")
 
+top50positions
+```
 
+```{r}
+top50billboard %>% 
+  full_join(top50positions, by = c("Track"))
+```
 
+Problem! There are some songs' names that differ slightly from one page to another. How can we fix this?
+
+```{r}
+top50billboard$Track_match <- sapply(top50billboard$Track, function(x) top50positions$Track[stringdist(x, top50positions$Track) == min(stringdist(x, top50positions$Track))])
+top50positions$Track_match <- sapply(top50positions$Track, function(x) top50billboard$Track[stringdist(x, top50billboard$Track) == min(stringdist(x, top50billboard$Track))])
+
+```
+
+```{r}
+top50billboard <- top50billboard %>% 
+  unnest()
+
+top50positions <- top50positions %>% 
+  unnest()
+
+# full_join the data frames on the matched song names
+df_join <- dplyr::full_join(top50positions, top50billboard, by = c("Track_match" = "Track"))
+```
+
+```{r}
+df_join %>% 
+  select(c(Artist.x, `Spotify Position`, `Billboard Position`, Track_match)) %>% 
+  distinct(Track_match, .keep_all = TRUE)
+```
 
 
 
