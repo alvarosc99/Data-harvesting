@@ -1,11 +1,11 @@
 # Listas de años: 
 
-tens = "37i9dQZF1DX5Ejj0EkURtP" 
-zeros = "37i9dQZF1DX4o1oenSJRJd"
-nineties = "37i9dQZF1DXbTxeAdrVG2l" 
-eighties = "37i9dQZF1DX4UtSsGT1Sbe"
-seventies = "37i9dQZF1DWTJ7xPn4vNaz" 
-sixties = "37i9dQZF1DXaKIA8E7WcJj"
+tens <-  "37i9dQZF1DX5Ejj0EkURtP" 
+zeros <- "37i9dQZF1DX4o1oenSJRJd"
+nineties <-  "37i9dQZF1DXbTxeAdrVG2l" 
+eighties <-  "37i9dQZF1DX4UtSsGT1Sbe"
+seventies <- "37i9dQZF1DWTJ7xPn4vNaz" 
+sixties <- "37i9dQZF1DXaKIA8E7WcJj"
 
 # Playlists 
 
@@ -39,7 +39,7 @@ followers = function(x) {
     filter(name == "name") %>% 
     unnest(cols = value) %>% 
     select(-name) %>% 
-    rename("list" = "value")
+    rename("playlist" = "value")
     
   df = cbind(resp_name, resp_followers)
   }

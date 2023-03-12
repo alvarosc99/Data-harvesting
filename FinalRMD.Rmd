@@ -1,0 +1,181 @@
+---
+title: "Music Harvesting"
+author: "Álvaro Sanz, Alejandro Aísa"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## Introduction 
+
+```{r message=FALSE, warning=FALSE}
+library(scrapex)
+library(httr2)
+library(tidyverse)
+```
+
+
+## Setting the Spotify API Credential 
+
+### Creating the account
+
+### Creating the app and the dashboard
+
+#### Client ID and Client Secret 
+
+Once we have created our account and our Spotify App for developers, we will have to look for our Client ID and Client Secret. They are shown in the dashboard of the App: 
+
+```{r}
+ID <- read.table("data haversting/BD/client_id.txt")
+
+client_ID <- ID$V1
+```
+
+
+```{r}
+secret <- read.table("data haversting/BD/client_secret.txt")
+
+client_secret <- secret$V1
+```
+
+### Creating the personal OAth 2.0 token for requests 
+
+Once we have our client id and our Client Secret, all we have to do is to make a request to the API to obtain the token that would allow us to perform future requests. As a note, this request would be done with httr library, instead of hhtr2. Therefore: 
+
+```{r}
+library(httr) 
+
+token_req <- POST(
+  "https://accounts.spotify.com/api/token",
+  accept_json(),
+  authenticate(client_ID, client_secret), 
+  body = list(grant_type = 'client_credentials'),
+  encode = 'form',
+  verbose())
+
+```
+
+Once the request is done, we will need to extract the token from the body of the response, and store it in the environment. 
+
+```{r}
+mytoken <- content(token_req)$access_token
+HeaderValue <- paste0("Bearer ", mytoken)
+```
+
+## The Data Harvesting process
+
+### 1 
+
+### 2
+
+### 3
+
+### Comparing music across time 
+
+#### All out X0s
+
+When comparing historic music, we will first resort to the spotify-made playlists for the most famous songs of each decade (60s to 10s. In order to perform this specific request, we will need the specific URI for playlists and the particular IDs from each of them. 
+
+##### Playlists IDs
+
+```{r}
+API_playlist <- "https://api.spotify.com/v1/playlists/"
+
+tens <-  "37i9dQZF1DX5Ejj0EkURtP" 
+zeros <- "37i9dQZF1DX4o1oenSJRJd"
+nineties <-  "37i9dQZF1DXbTxeAdrVG2l" 
+eighties <-  "37i9dQZF1DX4UtSsGT1Sbe"
+seventies <- "37i9dQZF1DWTJ7xPn4vNaz" 
+sixties <- "37i9dQZF1DXaKIA8E7WcJj"
+```
+
+For this particular case, we have selected 6 different playlist, one for each decade since the 60s. In order to study their _importance_ for listeners nowadays, we will look for the number of followers that each of them posses. This figure account for the number of people that have stored and downloaded the playlists in their own account. Thus, we may assume this number as a proxy for popularity. 
+
+##### Custom function for extracting followers 
+
+As the data is nested in a JSON within the body of the response we will need to apply again some techniques to read the data into a dataframe. However, contrary to previous points, we will use a function to extract the information in a single step. This custom function will perform the following tasks: 
+
+- In the first place, we will create the specific URI for each playlist 
+- Secondly, we will perform the request, provinding the personal token. 
+- Next, we will create a dataframe with a column list, for the information provided in the response. Within that dataframe, we will select only the row that contain information about the followers. Then, we will unnest this column to create a new dataframe. 
+- The new dataframe for followers contains a list with two values; a NULL and the actual figure. Then, we need to filter out the first and select and rename the colums that pertains to our query. 
+- We repeat the previous step for the node that contains the information of the name of the playlist. Lucklily, this time the node only contains such name, so the unnest function serve to create a new one-row dataframe. Lastly, we change the name of the column for practical purposes. 
+- Finally, we merge the two dataframes into a sigle one. 
+
+```{r}
+followers = function(x) { 
+  rt_spotify = paste0(API_playlist, x) # Creating the URI for the requests
+  
+  resp_output = 
+    rt_spotify %>% 
+    request() %>% 
+    req_auth_bearer_token(mytoken) %>% # Providing the token
+    req_perform() %>% # Performing the request
+    resp_body_json() # Obtaining the response body as a JSON file 
+  
+  resp_followers = 
+    resp_output %>% 
+    enframe() %>% # Creating the column-list dataframe
+    filter(name == "followers") %>% # selecting only the followers node
+    unnest(cols = value) %>% # creating the dataframe
+    filter(!value == "NULL") %>% # filtering out NULL row 
+    select(-name) %>% # Selecting and renaming 
+    rename("followers" = "value")
+  
+  resp_name = resp_output %>% 
+    enframe() %>% # Creating column-list
+    filter(name == "name") %>% # Filtering for the name of the playlist
+    unnest(cols = value) %>% # Creating the dataframe 
+    select(-name) %>% 
+    rename("playlist" = "value")
+    
+  df = cbind(resp_name, resp_followers) # Merging 
+  }
+```
+
+Once we have defined our custom function, we will use lapply to create a loop that would go over each individual playlist and extract the information. Then, thanks to the do.call function, we will merge all the figures into a single data frame. 
+
+```{r}
+years <- c(sixties, seventies, eighties, nineties, zeros, tens)
+
+followers_list = lapply(years, followers) 
+followers_df = do.call(rbind, followers_list) %>% transmute(
+    playlist = as.character(playlist), 
+    followers = as.numeric(followers))
+```
+
+##### Plotting the number of followers of each decade playlist. 
+
+As we have now the data stored in a dataframe, we can easily plot them:
+
+```{r}
+hp = ggplot(followers_df)+
+  aes(playlist, followers)+
+  geom_col()
+
+hp
+```
+
+#### Addressing music features on historic music
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
