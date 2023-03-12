@@ -14,6 +14,20 @@ library(tidyverse)
 ```
 
 
+Cositas que he hecho: 
+
+He redactado un poco el readme y he añadido las instrucciones para token
+
+
+He añadido lo mio, me falta añadir algo de scrapeo que tengo previsto añadir entre mañana y el martes, si el challengue lo permite. 
+
+Me he despythonizado y he puesto <- en vez de =. 
+
+Estoy llamando a los URI: API_Playlist y API_tracks (para estandarizarnos)
+
+
+
+
 ## Setting the Spotify API Credential 
 
 ### Creating the account
@@ -63,11 +77,11 @@ HeaderValue <- paste0("Bearer ", mytoken)
 
 ## The Data Harvesting process
 
-### 1 
+### 1 Compare global songs 
 
-### 2
+### 2 Compare across countries 
 
-### 3
+### 3 Web scrapping vs Spotify API 
 
 ### Comparing music across time 
 
@@ -157,13 +171,76 @@ hp
 
 #### Addressing music features on historic music
 
+Similarly, we may create a custom function that would enable us to obtain different musical features of different songs. Spotify indexes different characteristics for each song, such as the danceability, the energy or the tempo. Same as before, we could compare songs/artists from nowadays to older ones, according to this features. Then, we have selected the most liked song (in spotify) from twelve artists, one man and one female from each decade (60s to 10s). Their IDs in spotify are the following: 
 
+```{r}
+Rihanna <- "49FYlytm3dAAraYgpoJZux"
+Drake <- "1zi7xx7UVEFkmKfv06H8x0"
+Eminem <- "1v7L65Lzy0j0vdpRjJewt1"
+LadyGaga <- "1QV6tiMFM6fSOKOGLMHYYg"
+MichaelJackson <- "3S2R0EVwBSAVMd5UMgKTL0"
+Madonna <- "22sLuJYcvZOSoLLRYev1s5"
+Queen <- "3z8h0TU7ReDPLIbEnYhWZb"
+Abba <- "0GjEhVFGZW8afUYGChu3Rr"
+RollingStones <- "63T7DJ1AFDD6Bn8VzG6JE8"
+WhitneyHouston <- "2tUBqZG2AbRi7Q0BIrVrEj"
+TheBeatles <- "6dGnYIeXmHdcikdzNNDMm2"
+Cher <- "2goLsvvODILDzeeiT4dAoR"
+```
 
+For function's purposes, we will store them already in a vector. Also, we will store the particular URI por the tracks' endopoint: 
 
+```{r}
+artists <- c(Rihanna, Drake, Eminem, LadyGaga, 
+            MichaelJackson, Madonna, Queen, Abba, 
+            RollingStones, WhitneyHouston, TheBeatles, Cher,
+            Beatles, Cher)
 
+API_tracks = "https://api.spotify.com/v1/audio-features/"
 
+```
 
+##### Custom function 
 
+The JSON returned in the request of the features is less nested. Therefore, the function is simpler. Similarly, we may use _simplifyVector = T_ and _as.tibble_ to have the key:value already stored as dataframes. Thus, the function will bear the request URI, the OAth token and the storing specificities.
+
+```{r}
+features <- function(x) {
+  track_uri <- paste0(API_tracks, x)
+  
+  req <- 
+    track_uri %>% 
+    request() %>% 
+    req_auth_bearer_token(mytoken) %>% 
+    req_perform() %>% 
+    resp_body_json(simplifyVector = T) %>% 
+    as_tibble() 
+}
+```
+
+Once we have the feature function, we will use _lapply_ and _do.call_ to perform the request for all the tracks and bind them together in a dataframe. For visualizing purposes, we will add a new colum specifiying the author of the particular songs: 
+
+```{r}
+features_list <- lapply(artists, features)
+
+features_df <- do.call(rbind, features_list) %>% 
+  mutate(
+    author = case_when(
+      id == "49FYlytm3dAAraYgpoJZux" ~ "Rihanna", 
+      id == "1zi7xx7UVEFkmKfv06H8x0" ~ "Drake", 
+      id == "1v7L65Lzy0j0vdpRjJewt1" ~ "Eminem", 
+      id == "1QV6tiMFM6fSOKOGLMHYYg" ~ "Lady Gaga", 
+      id == "3S2R0EVwBSAVMd5UMgKTL0" ~ "Michael Jackson", 
+      id == "22sLuJYcvZOSoLLRYev1s5" ~ "Madonna", 
+      id == "3z8h0TU7ReDPLIbEnYhWZb" ~ "Queen", 
+      id == "0GjEhVFGZW8afUYGChu3Rr" ~ "Abba", 
+      id == "63T7DJ1AFDD6Bn8VzG6JE8" ~ "Rolling Stone", 
+      id == "2tUBqZG2AbRi7Q0BIrVrEj" ~ "Whitney Houston", 
+      id == "6dGnYIeXmHdcikdzNNDMm2" ~ "Beatles", 
+      id == "2goLsvvODILDzeeiT4dAoR" ~ "Cher"))
+```
+
+##### Plotting the features
 
 
 
