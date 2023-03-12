@@ -8,9 +8,13 @@ output: html_document
 ## Introduction 
 
 ```{r message=FALSE, warning=FALSE}
-library(scrapex)
-library(httr2)
 library(tidyverse)
+library(httr2)
+library(httr)
+library(ggplot2)
+library(jsonlite)
+library(xml2)
+library(stringr)
 ```
 
 
@@ -77,11 +81,291 @@ HeaderValue <- paste0("Bearer ", mytoken)
 
 ## The Data Harvesting process
 
-### 1 Compare global songs 
+### Step 0: setting the base request. 
 
-### 2 Compare across countries 
+```{r}
+req <- request(spo_gen) %>% 
+  req_auth_bearer_token(fulltoken) %>% 
+  req_retry(max_tries = 3) %>% 
+  req_options(timeout_ms = 10000) %>% 
+  req_throttle(rate = 30 / 60)
+```
 
-### 3 Web scrapping vs Spotify API 
+
+### 1. Comparing songs in the Global Top 50.
+
+(Description)
+
+```{r}
+top50global <- "37i9dQZEVXbNG2KDcFcKOF?si"
+```
+
+
+```{r}
+top50 <- req %>% 
+  req_url_path_append(paste("playlists", top50global, sep = "/")) %>% 
+  req_perform() %>% 
+  resp_body_json(simplifyVector = T)
+
+top50
+
+top50 <- top50$Tracks$items
+
+top50 <- top50 %>% 
+  select(Track) %>% 
+  unnest(Track) %>% 
+  select(c(album, artists, duration_ms, explicit, name, id, popularity)) 
+```
+
+```{r}
+top50filtered <- top50 %>% unnest(artists, names_repair = "universal") %>% #Featurings make 2 different cases, for each artist. 
+  select(!c(external_urls, href, type, uri, album))
+
+top50filtered
+```
+For more precise analysis - each song's features: 
+```{r}
+songs <- top50filtered$id...11
+```
+
+```{r}
+
+req %>% 
+  req_url_path_append(paste("audio-features", songs[1], sep = "/")) %>% 
+  req_perform() %>% 
+  resp_body_json(simplifyVector = TRUE) %>% 
+  as.tibble()
+
+```
+
+```{r}
+
+top50songs <- data.frame()
+
+for(i in 1:length(unique(songs))) { #We set the unique to avoid the features problem. 
+  
+  song <- req %>% 
+  req_url_path_append(paste("audio-features", unique(songs)[i], sep = "/")) %>% 
+  req_perform() %>% 
+  resp_body_json(simplifyVector = TRUE) %>% 
+  as.tibble()
+  
+  top50songs <- rbind(song, top50songs)
+  
+} 
+
+top50songs
+```
+
+Now, bind a column for each song's name. 
+
+```{r}
+top50ids <- top50filtered %>% 
+  select(c(name...10, id...11)) %>% 
+  distinct(name...10, .keep_all = TRUE) %>% 
+  rename("id" = "id...11")
+```
+
+```{r}
+top50full <- top50songs %>% 
+  full_join(top50ids, by = "id")
+
+top50full
+```
+
+### 2. Comparing top songs of different countries
+
+```{r}
+top50colombia <- "37i9dQZEVXbL1Fl8vdBUba"
+top50india <- "37i9dQZEVXbMWDif5SCBJq"
+```
+    
+## Colombia    
+
+```{r}
+top50col <- req %>% 
+  req_url_path_append(paste("playlists", top50colombia, sep = "/")) %>% 
+  req_perform() %>% 
+  resp_body_json(simplifyVector = T)
+
+top50col <- top50col$Tracks$items %>% 
+  select(Track) %>% 
+  unnest() %>% 
+  select(c(artists, explicit, duration_ms, name, id, popularity))
+
+colsongs <- top50col$id
+```
+
+```{r}
+top50colsongs <- data.frame()
+
+for(i in 1:length(unique(colsongs))) { #We set the unique to avoid the features problem. 
+  
+  song <- req %>% 
+  req_url_path_append(paste("audio-features", colsongs[i], sep = "/")) %>% 
+  req_perform() %>% 
+  resp_body_json(simplifyVector = TRUE) %>% 
+  as.tibble()
+  
+  top50colsongs <- rbind(song, top50colsongs)
+  
+} 
+
+top50colsongs
+```
+
+```{r}
+top50col <- top50col %>% 
+  select(c(name, id))
+```
+
+```{r}
+top50colfull <- top50col %>% 
+  full_join(top50colsongs, by = "id")
+
+top50colfull
+```
+
+## India
+
+```{r}
+top50ind <- req %>% 
+  req_url_path_append(paste("playlists", top50india, sep = "/")) %>% 
+  req_perform() %>% 
+  resp_body_json(simplifyVector = T)
+
+top50ind <- top50ind$Tracks$items %>% 
+  select(Track) %>% 
+  unnest() %>% 
+  select(c(artists, explicit, duration_ms, name, id, popularity))
+
+indsongs <- top50ind$id
+```
+
+```{r}
+top50indsongs <- data.frame()
+
+for(i in 1:length(unique(indsongs))) { #We set the unique to avoid the features problem. 
+  
+  song <- req %>% 
+  req_url_path_append(paste("audio-features", indsongs[i], sep = "/")) %>% 
+  req_perform() %>% 
+  resp_body_json(simplifyVector = TRUE) %>% 
+  as.tibble()
+  
+  top50indsongs <- rbind(song, top50indsongs)
+  
+} 
+
+top50indsongs
+```
+
+```{r}
+top50ind <- top50ind %>% 
+  select(c(name, id))
+```
+
+```{r}
+top50indfull <- top50ind %>% 
+  full_join(top50indsongs, by = "id")
+
+top50indfull
+```
+
+### 3. Comparing TOP 50s. Spotify Vs. Billboard
+
+```{r}
+
+billboard <- "https://www.billboard.com/charts/billboard-global-200/"
+browseURL(billboard)
+```
+
+```{r}
+billboard_raw <- read_html(billboard) %>% 
+  xml_child()
+```
+
+Songs: 
+```{r}
+bill200 <- billboard_raw %>%
+  xml_find_all("//li/ul/li/h3[@id = 'title-of-a-story']")
+```
+
+```{r}
+billfilter <- bill200[1:50] %>% 
+  xml_text() %>% 
+  str_remove_all("\t|\n")
+  
+```
+
+Artists:
+
+```{r}
+bill200art <- billboard_raw %>%
+  xml_find_all("//li/ul/li/span[contains(@class, 'c-label  a-no-trucate a-font-primary')]")
+```
+
+```{r}
+billfilterart <- bill200art[1:50] %>% 
+  xml_text() %>% 
+  str_remove_all("\t|\n")
+```
+
+Merging both: 
+```{r}
+top50billboard <- billfilter %>% 
+  as.data.frame() %>% 
+  cbind(as.data.frame(billfilterart)) %>% 
+  rename("Track" = ".",
+         "Artist" = "billfilterart") %>% 
+  mutate(`Billboard Position` = row_number())
+
+top50billboard
+```
+
+And take the positions from the Spotify Global 50: 
+
+```{r}
+top50positions <- top50filtered %>% 
+  select(c(name...5, name...10)) %>% 
+  distinct(name...10, .keep_all = TRUE) %>% 
+  mutate(`Spotify Position` = row_number()) %>% 
+  rename("Artist" = "name...5", 
+         "Track" = "name...10")
+
+top50positions
+```
+
+```{r}
+top50billboard %>% 
+  full_join(top50positions, by = c("Track"))
+```
+
+Problem! There are some songs' names that differ slightly from one page to another. How can we fix this?
+
+```{r}
+top50billboard$Track_match <- sapply(top50billboard$Track, function(x) top50positions$Track[stringdist(x, top50positions$Track) == min(stringdist(x, top50positions$Track))])
+top50positions$Track_match <- sapply(top50positions$Track, function(x) top50billboard$Track[stringdist(x, top50billboard$Track) == min(stringdist(x, top50billboard$Track))])
+
+```
+
+```{r}
+top50billboard <- top50billboard %>% 
+  unnest()
+
+top50positions <- top50positions %>% 
+  unnest()
+
+# full_join the data frames on the matched song names
+df_join <- dplyr::full_join(top50positions, top50billboard, by = c("Track_match" = "Track"))
+```
+
+```{r}
+df_join %>% 
+  select(c(Artist.x, `Spotify Position`, `Billboard Position`, Track_match)) %>% 
+  distinct(Track_match, .keep_all = TRUE)
+```
+
 
 ### Comparing music across time 
 
