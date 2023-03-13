@@ -492,15 +492,21 @@ df_join <- dplyr::full_join(top50positions, top50billboard, by = c("Track_match"
 ```
 
 ```{r}
-df_join %>% 
+comparison <- df_join %>% 
   select(c(Artist.x, `Spotify Position`, `Billboard Position`, Track_match)) %>% 
-  distinct(Track_match, .keep_all = TRUE)
+  distinct(Track_match, .keep_all = TRUE) %>% 
+  mutate(Difference = `Spotify Position` - `Billboard Position`,
+         reference = 0)
+
+comparison
 ```
 
 Which are the most penalized songs in comparison?
 
 ```{r}
-
+comparison %>% 
+  ggplot(aes(y = Track_match, x=reference)) +
+  geom_segment(aes(xend=Difference, yend = Track_match))
 ```
 
 
