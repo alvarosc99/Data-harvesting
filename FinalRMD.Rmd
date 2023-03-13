@@ -7,6 +7,10 @@ output: html_document
 
 ## Introduction 
 
+Music nowadays is probably one of the most profitable industries in the world; almost everyone listens to music, whether it is while driving, when doing exercise, or just lying in bed. This popularity of music has induced to the development huge number of genres, each one with their own style and characteristics. Similarly, the development of the telecommunication technologies in the last couples of decades has made possible that the channels for listening to music change over time. We are not any more confined to CDs and radio. Streaming platforms like Spotify or Video platforms like YouTube are considered nowadays the most important ones for the industry. 
+
+Therefore, the main objective of this work would be to analyse the differences in music. Using the Spotify Web API as a reference, we will try to analise the differences in popularity, genres or characteristics. In this line of reasoning, we will also evaluate the change of music over time. 
+
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
 library(httr2)
@@ -17,28 +21,16 @@ library(xml2)
 library(stringr)
 library(stringdist)
 library(stargazer)
+library(plotly)
 ```
-
-
-Cositas que he hecho: 
-
-He redactado un poco el readme y he añadido las instrucciones para token
-
-
-He añadido lo mio, me falta añadir algo de scrapeo que tengo previsto añadir entre mañana y el martes, si el challengue lo permite. 
-
-Me he despythonizado y he puesto <- en vez de =. 
-
-Estoy llamando a los URI: API_Playlist y API_tracks (para estandarizarnos)
-
-
-
 
 ## Setting the Spotify API Credential 
 
-### Creating the account
+### Creating the account and the app for developers. 
 
-### Creating the app and the dashboard
+As explained in the README file, the first necessary conditions for obtaining the credentials for using the Spotify Web API is having a valid account for the [application](https://www.spotify.com). 
+
+Once we have our account, we are ready to register an app within the API; by clicking in the create and app button, and provide a name for the app and a description. The purpose of creating this app is obtaining two central things: the _client ID_ and the _client secret_. These two 
 
 #### Client ID and Client Secret 
 
@@ -82,7 +74,6 @@ HeaderValue <- paste0("Bearer ", mytoken)
 spo_gen <- "https://api.spotify.com/v1"
 ```
 
-
 ```{r}
 req <- request(spo_gen) %>% 
   req_auth_bearer_token(mytoken) %>% 
@@ -90,7 +81,6 @@ req <- request(spo_gen) %>%
   req_options(timeout_ms = 10000) %>% 
   req_throttle(rate = 30 / 60)
 ```
-
 
 ### 1. Comparing songs in the Global Top 50.
 
@@ -125,6 +115,7 @@ top50filtered <- top50 %>% unnest(artists, names_repair = "universal") %>% #Feat
 
 top50filtered
 ```
+
 For more precise analysis - each song's features: 
 ```{r}
 songs <- top50filtered$id...11
@@ -135,7 +126,7 @@ req %>%
   req_url_path_append(paste("audio-features", songs[1], sep = "/")) %>% 
   req_perform() %>% 
   resp_body_json(simplifyVector = TRUE) %>% 
-  as.tibble()
+  as_tibble()
 ```
 
 ```{r}
@@ -519,8 +510,6 @@ When comparing historic music, we will first resort to the spotify-made playlist
 ##### Playlists IDs
 
 ```{r}
-API_playlist <- "https://api.spotify.com/v1/playlists/"
-
 tens <-  "37i9dQZF1DX5Ejj0EkURtP" 
 zeros <- "37i9dQZF1DX4o1oenSJRJd"
 nineties <-  "37i9dQZF1DXbTxeAdrVG2l" 
@@ -544,13 +533,11 @@ As the data is nested in a JSON within the body of the response we will need to 
 
 ```{r}
 
-#Intentar adaptar al formato req inicial, para estandarizar
 followers <- function(x) { 
-  rt_spotify <- paste0(API_playlist, x) # Creating the URI for the requests
-  
+
   resp_output <- 
-    rt_spotify %>% 
-    request() %>% 
+    req %>% 
+    req_url_path_append(paste("playlists", x, sep = "/")) %>% 
     req_auth_bearer_token(mytoken) %>% # Providing the token
     req_perform() %>% # Performing the request
     resp_body_json() # Obtaining the response body as a JSON file 
@@ -593,14 +580,16 @@ As we have now the data stored in a dataframe, we can easily plot them:
 ```{r}
 hp <- ggplot(followers_df)+
   aes(playlist, followers)+
-  geom_col()
+  geom_col(aes(fill = playlist)) + 
+  theme_minimal()+
+  guides(fill = "none")
 
 hp
 ```
 
-#### Addressing music features on historic music
+#### Comparing music features on historic music
 
-Similarly, we may create a custom function that would enable us to obtain different musical features of different songs. Spotify indexes different characteristics for each song, such as the danceability, the energy or the tempo. Same as before, we could compare songs/artists from nowadays to older ones, according to this features. Then, we have selected the most liked song (in spotify) from twelve artists, one man and one female from each decade (60s to 10s). Their IDs in spotify are the following: 
+Similarly, we may create a custom function that would enable us to obtain different musical features of different songs. Spotify indexes different characteristics for each song, such as the danceability, the energy or the tempo. Same as before, we could compare songs/artists from nowadays to older ones, according to this features. Then, we have selected the most liked song (in spotify) from twelve artists, one man and one female from each decade (60s to 10s). For function's purposes, we will store them already in a vector. Also, we will store the particular URI por the tracks' endopoint:  Their IDs in spotify are the following: 
 
 ```{r}
 Rihanna <- "49FYlytm3dAAraYgpoJZux"
@@ -615,19 +604,13 @@ RollingStones <- "63T7DJ1AFDD6Bn8VzG6JE8"
 WhitneyHouston <- "2tUBqZG2AbRi7Q0BIrVrEj"
 TheBeatles <- "6dGnYIeXmHdcikdzNNDMm2"
 Cher <- "2goLsvvODILDzeeiT4dAoR"
-```
 
-For function's purposes, we will store them already in a vector. Also, we will store the particular URI por the tracks' endopoint: 
-
-```{r}
 artists <- c(Rihanna, Drake, Eminem, LadyGaga, 
             MichaelJackson, Madonna, Queen, Abba, 
             RollingStones, WhitneyHouston, TheBeatles, Cher,
-            Beatles, Cher)
-
-API_tracks <- "https://api.spotify.com/v1/audio-features/"
-
+            TheBeatles, Cher)
 ```
+
 
 ##### Custom function 
 
@@ -635,15 +618,14 @@ The JSON returned in the request of the features is less nested. Therefore, the 
 
 ```{r}
 features <- function(x) {
-  track_uri <- paste0(API_tracks, x)
-  
+
   req <- 
-    track_uri %>% 
-    request() %>% 
+    req %>% 
+    req_url_path_append(paste("audio-features", x, sep = "/")) %>%  
     req_auth_bearer_token(mytoken) %>% 
     req_perform() %>% 
     resp_body_json(simplifyVector = T) %>% 
-    as_tibble() ## Adaptar al formato req inicial, para estandarizar
+    as_tibble() 
   
 }
 ```
@@ -653,7 +635,9 @@ Once we have the feature function, we will use _lapply_ and _do.call_ to perform
 ```{r}
 features_list <- lapply(artists, features)
 
-features_df <- do.call(rbind, features_list) %>% 
+features_df <- do.call(rbind, features_list) 
+
+features_df <- features_df %>% 
   mutate(
     author = case_when(
       id == "49FYlytm3dAAraYgpoJZux" ~ "Rihanna", 
@@ -667,10 +651,39 @@ features_df <- do.call(rbind, features_list) %>%
       id == "63T7DJ1AFDD6Bn8VzG6JE8" ~ "Rolling Stone", 
       id == "2tUBqZG2AbRi7Q0BIrVrEj" ~ "Whitney Houston", 
       id == "6dGnYIeXmHdcikdzNNDMm2" ~ "Beatles", 
-      id == "2goLsvvODILDzeeiT4dAoR" ~ "Cher"))
+      id == "2goLsvvODILDzeeiT4dAoR" ~ "Cher")) %>% 
+  dplyr::select(author, danceability, energy, key, loudness, speechiness, acousticness, instrumentalness, liveness, valence, tempo, duration_ms) %>% 
+    mutate(
+      decade = case_when(
+        author == "Rihanna" |  author == "Drake" ~ "10s", 
+        author == "Lady Gaga" |  author == "Eminem" ~ "00s", 
+        author == "Madonna" |  author == "Michael Jackson" ~ "90s", 
+        author == "Abba" |  author == "Queen" ~ "80s", 
+        author == "Whitney Houston" |  author == "Rolling Stone" ~ "70s", 
+        author == "Cher" |  author == "Beatles" ~ "60s")) 
+        
+    
 ```
 
 ##### Plotting the features
+
+```{r}
+features_plot <- ggplot(features_df) +
+  aes(x = danceability, y = energy, colour = decade) +
+  geom_point() +
+  scale_size_area(max_size = 20)+
+  theme_minimal()+
+  geom_text(aes(label = author)) 
+
+features_plot
+
+```
+
+#### Comparing related artists 
+
+```{r}
+
+```
 
 
 
