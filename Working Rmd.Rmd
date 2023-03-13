@@ -33,6 +33,7 @@ library(ggplot2)
 library(jsonlite)
 library(xml2)
 library(stringr)
+library(stringdist)
 
 set_config(
   user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0; Alvaro Sanz / 100385774@alumnos.uc3m.es")
@@ -98,11 +99,11 @@ top50 <- req %>%
 
 top50
 
-top50 <- top50$Tracks$items
+top50 <- top50$tracks$items
 
 top50 <- top50 %>% 
-  select(Track) %>% 
-  unnest(Track) %>% 
+  select(track) %>% 
+  unnest(track) %>% 
   select(c(album, artists, duration_ms, explicit, name, id, popularity)) 
 ```
 
@@ -180,8 +181,8 @@ top50col <- req %>%
   req_perform() %>% 
   resp_body_json(simplifyVector = T)
 
-top50col <- top50col$Tracks$items %>% 
-  select(Track) %>% 
+top50col <- top50col$tracks$items %>% 
+  select(track) %>% 
   unnest() %>% 
   select(c(artists, explicit, duration_ms, name, id, popularity))
 
@@ -226,8 +227,8 @@ top50ind <- req %>%
   req_perform() %>% 
   resp_body_json(simplifyVector = T)
 
-top50ind <- top50ind$Tracks$items %>% 
-  select(Track) %>% 
+top50ind <- top50ind$tracks$items %>% 
+  select(track) %>% 
   unnest() %>% 
   select(c(artists, explicit, duration_ms, name, id, popularity))
 

@@ -15,6 +15,8 @@ library(ggplot2)
 library(jsonlite)
 library(xml2)
 library(stringr)
+library(stringdist)
+library(stargazer)
 ```
 
 
@@ -43,16 +45,12 @@ Estoy llamando a los URI: API_Playlist y API_tracks (para estandarizarnos)
 Once we have created our account and our Spotify App for developers, we will have to look for our Client ID and Client Secret. They are shown in the dashboard of the App: 
 
 ```{r}
-ID <- read.table("data haversting/BD/client_id.txt")
-
-client_ID <- ID$V1
+client_ID <- scan("C:/Users/alvar/Desktop/client_id.txt", what = character()) # Enter the correct path where the client_id is located. 
 ```
 
 
 ```{r}
-secret <- read.table("data haversting/BD/client_secret.txt")
-
-client_secret <- secret$V1
+client_secret <- scan("C:/Users/alvar/Desktop/client_secret.txt", what = character()) # Enter the correct path where the client_secret is located.
 ```
 
 ### Creating the personal OAth 2.0 token for requests 
@@ -60,8 +58,6 @@ client_secret <- secret$V1
 Once we have our client id and our Client Secret, all we have to do is to make a request to the API to obtain the token that would allow us to perform future requests. As a note, this request would be done with httr library, instead of hhtr2. Therefore: 
 
 ```{r}
-library(httr) 
-
 token_req <- POST(
   "https://accounts.spotify.com/api/token",
   accept_json(),
@@ -69,7 +65,6 @@ token_req <- POST(
   body = list(grant_type = 'client_credentials'),
   encode = 'form',
   verbose())
-
 ```
 
 Once the request is done, we will need to extract the token from the body of the response, and store it in the environment. 
@@ -81,11 +76,16 @@ HeaderValue <- paste0("Bearer ", mytoken)
 
 ## The Data Harvesting process
 
-### Step 0: setting the base request. 
+### Step 0: setting the base request.
+
+```{r}
+spo_gen <- "https://api.spotify.com/v1"
+```
+
 
 ```{r}
 req <- request(spo_gen) %>% 
-  req_auth_bearer_token(fulltoken) %>% 
+  req_auth_bearer_token(mytoken) %>% 
   req_retry(max_tries = 3) %>% 
   req_options(timeout_ms = 10000) %>% 
   req_throttle(rate = 30 / 60)
@@ -108,12 +108,14 @@ top50 <- req %>%
   resp_body_json(simplifyVector = T)
 
 top50
+```
 
-top50 <- top50$Tracks$items
+```{r}
+top50 <- top50$tracks$items
 
 top50 <- top50 %>% 
-  select(Track) %>% 
-  unnest(Track) %>% 
+  select(track) %>% 
+  unnest(track) %>% 
   select(c(album, artists, duration_ms, explicit, name, id, popularity)) 
 ```
 
@@ -129,17 +131,14 @@ songs <- top50filtered$id...11
 ```
 
 ```{r}
-
 req %>% 
   req_url_path_append(paste("audio-features", songs[1], sep = "/")) %>% 
   req_perform() %>% 
   resp_body_json(simplifyVector = TRUE) %>% 
   as.tibble()
-
 ```
 
 ```{r}
-
 top50songs <- data.frame()
 
 for(i in 1:length(unique(songs))) { #We set the unique to avoid the features problem. 
@@ -168,10 +167,76 @@ top50ids <- top50filtered %>%
 
 ```{r}
 top50full <- top50songs %>% 
-  full_join(top50ids, by = "id")
+  full_join(top50ids, by = "id") %>% 
+  select(c(`name...10`, danceability, energy, loudness, speechiness, acousticness, instrumentalness, liveness, valence, tempo, duration_ms))
 
 top50full
 ```
+
+The tracks appear in inverse order respective to their position in the Top 50, so let's fix that and add that info: 
+
+```{r}
+top50full <- top50full %>% 
+  arrange(desc(row_number())) %>% 
+  mutate(Position = row_number(),
+         duration_ms = duration_ms / 1000) %>% 
+  rename("duration" = "duration_ms")
+
+top50full
+```
+
+How do this 'internal' characteristics of the songs affect their position? Is there any pattern?
+
+```{r}
+pois <- glm(Position ~ danceability + energy + loudness + speechiness + acousticness + instrumentalness + liveness + valence + tempo + duration, family = poisson(), data = top50full)
+
+summary(pois)
+
+stargazer(pois,
+          type = "text", 
+          column.labels = "Coefficient")
+```
+(Explain)
+
+```{r}
+poisson_plot <- function(model) {
+  # Extract the model coefficients and standard errors
+  coef_df <- data.frame(coef = coef(model), se = sqrt(diag(vcov(model))))
+  
+  # Plot the coefficient estimates with confidence intervals
+  ggplot(coef_df, aes(x = rownames(coef_df), y = coef)) +
+    geom_point() +
+    geom_errorbar(aes(ymin = coef - 1.96 * se, ymax = coef + 1.96 * se), width = 0.2) +
+    coord_flip() +
+    xlab("") +
+    ylab("Coefficient Estimate") +
+    ggtitle("Poisson Regression Coefficient Estimates")
+}
+
+poisson_plot(pois)
+```
+
+
+Now, let's visualize if there are notable differences between the top songs and the bottom ones: 
+
+Danceability: 
+```{r}
+top50full %>% ggplot(aes(x=Position, y=danceability)) +
+  geom_col()
+```
+
+Acousticness: 
+```{r}
+top50full %>% ggplot(aes(x=Position, y=acousticness)) +
+  geom_col()
+```
+Speechiness: 
+
+```{r}
+top50full %>% ggplot(aes(x=Position, y=speechiness)) +
+  geom_col()
+```
+
 
 ### 2. Comparing top songs of different countries
 
@@ -188,8 +253,8 @@ top50col <- req %>%
   req_perform() %>% 
   resp_body_json(simplifyVector = T)
 
-top50col <- top50col$Tracks$items %>% 
-  select(Track) %>% 
+top50col <- top50col$tracks$items %>% 
+  select(track) %>% 
   unnest() %>% 
   select(c(artists, explicit, duration_ms, name, id, popularity))
 
@@ -234,8 +299,8 @@ top50ind <- req %>%
   req_perform() %>% 
   resp_body_json(simplifyVector = T)
 
-top50ind <- top50ind$Tracks$items %>% 
-  select(Track) %>% 
+top50ind <- top50ind$tracks$items %>% 
+  select(track) %>% 
   unnest() %>% 
   select(c(artists, explicit, duration_ms, name, id, popularity))
 
