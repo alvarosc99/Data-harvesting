@@ -221,20 +221,32 @@ Now, let's visualize if there are notable differences between the top songs and 
 
 Danceability: 
 ```{r}
-top50full %>% ggplot(aes(x=Position, y=danceability)) +
-  geom_col()
+dance <- top50full %>% 
+  ggplot(aes(x=Position, y=danceability), text = paste(name...10)) +
+  geom_point() +
+  ylim(c(0, 1))
+
+ggplotly(dance)
 ```
 
 Acousticness: 
 ```{r}
-top50full %>% ggplot(aes(x=Position, y=acousticness)) +
-  geom_col()
+acoustic <- top50full %>% 
+  ggplot(aes(x=Position, y=acousticness), text = paste(name...10)) +
+  geom_point() +
+  ylim(c(0, 1))
+
+ggplotly(acoustic)
 ```
 Speechiness: 
 
 ```{r}
-top50full %>% ggplot(aes(x=Position, y=speechiness)) +
-  geom_col()
+speech <- top50full %>% 
+  ggplot(aes(x=Position, y=speechiness), text = paste(name...10)) +
+  geom_point() +
+  ylim(c(0, 0.5))
+
+ggplotly(speech)
 ```
 
 
@@ -286,7 +298,10 @@ top50col <- top50col %>%
 
 ```{r}
 top50colfull <- top50col %>% 
-  full_join(top50colsongs, by = "id")
+  full_join(top50colsongs, by = "id") %>% 
+  mutate(Position = row_number(),
+         playlist = "Colombia TOP 50") %>% 
+  select(c(name, Position, danceability, energy, key, loudness, speechiness, acousticness, instrumentalness, liveness, valence, tempo, duration_ms, playlist))
 
 top50colfull
 ```
@@ -332,15 +347,66 @@ top50ind <- top50ind %>%
 
 ```{r}
 top50indfull <- top50ind %>% 
-  full_join(top50indsongs, by = "id")
+  full_join(top50indsongs, by = "id") %>% 
+  mutate(Position = row_number(), 
+         playlist = "India TOP 50") %>% 
+  select(c(name, Position, danceability, energy, key, loudness, speechiness, acousticness, instrumentalness, liveness, valence, tempo, duration_ms, playlist))
 
 top50indfull
+```
+
+Are there important differences in the distribution of this variables? 
+
+```{r}
+tracks2 <- rbind(top50colfull, top50indfull)
+```
+
+
+```{r}
+viz4 <- ggplot(tracks2, aes(x=danceability, fill=playlist,
+                    text = paste(playlist)))+
+  geom_density(alpha=0.7, color=NA)+
+  scale_fill_manual(values=c("blue", "orange"))+
+  labs(x="Danceability", y="Density") +
+  guides(fill=guide_legend(title="Playlist"))+
+  xlim(c(0.25,1)) +
+  theme_minimal()+
+  ggtitle("Distribution of Danceability Data")
+
+ggplotly(viz4, tooltip=c("text"))
+```
+
+```{r}
+viz4 <- ggplot(tracks2, aes(x=valence, fill=playlist,
+                    text = paste(playlist)))+
+  geom_density(alpha=0.7, color=NA)+
+  scale_fill_manual(values=c("blue", "orange"))+
+  labs(x="Energy", y="Density") +
+  guides(fill=guide_legend(title="Playlist"))+
+  xlim(c(0.25,1)) +
+  theme_minimal()+
+  ggtitle("Distribution of Positiveness")
+
+ggplotly(viz4, tooltip=c("text"))
+```
+
+```{r}
+viz4 <- ggplot(tracks2, aes(x=speechiness, fill=playlist,
+                    text = paste(playlist)))+
+  geom_density(alpha=0.7, color=NA)+
+  scale_fill_manual(values=c("blue", "orange"))+
+  labs(x="Danceability", y="Density") +
+  guides(fill=guide_legend(title="Playlist"))+
+  xlim(c(0,0.5)) +
+  theme_minimal()+
+  ggtitle("Distribution of Danceability Data")
+
+ggplotly(viz4, tooltip=c("text"))
 ```
 
 ### 3. Comparing TOP 50s. Spotify Vs. Billboard
 
 ```{r}
-
 billboard <- "https://www.billboard.com/charts/billboard-global-200/"
 browseURL(billboard)
 ```
@@ -429,6 +495,12 @@ df_join <- dplyr::full_join(top50positions, top50billboard, by = c("Track_match"
 df_join %>% 
   select(c(Artist.x, `Spotify Position`, `Billboard Position`, Track_match)) %>% 
   distinct(Track_match, .keep_all = TRUE)
+```
+
+Which are the most penalized songs in comparison?
+
+```{r}
+
 ```
 
 
