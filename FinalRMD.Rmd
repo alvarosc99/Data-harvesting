@@ -37,12 +37,12 @@ Once we have our account, we are ready to register an app within the API; by cli
 Once we have created our account and our Spotify App for developers, we will have to look for our Client ID and Client Secret. They are shown in the dashboard of the App: 
 
 ```{r}
-client_ID <- scan("C:/Users/alvar/Desktop/client_id.txt", what = character()) # Enter the correct path where the client_id is located. 
+client_ID <- scan("C:/Users/alvar/Desktop/client_id.txt", what = character()) # Enter the correct path where the client_id is located. Note: in R, the "\" symbol is not supported. Instead, use "/".
 ```
 
 
 ```{r}
-client_secret <- scan("C:/Users/alvar/Desktop/client_secret.txt", what = character()) # Enter the correct path where the client_secret is located.
+client_secret <- scan("C:/Users/alvar/Desktop/client_secret.txt", what = character()) # Enter the correct path where the client_secret is located. Note: in R, the "\" symbol is not supported. Instead, use "/".
 ```
 
 ### Creating the personal OAth 2.0 token for requests 
@@ -213,31 +213,82 @@ Now, let's visualize if there are notable differences between the top songs and 
 Danceability: 
 ```{r}
 dance <- top50full %>% 
-  ggplot(aes(x=Position, y=danceability), text = paste(name...10)) +
+  ggplot(aes(x=Position, y=danceability, color = danceability, text = paste0("Song: ", name...10))) +
   geom_point() +
-  ylim(c(0, 1))
+  ylab("Danceability") +
+  xlab("Position in the TOP 50") +
+  scale_color_gradient(low = "darkblue", high = "orange") +
+  ylim(c(0.25, 1)) +
+  theme_light() +
+  labs(title = "If I can't dance...",
+       color = "Danceability") +
+  theme(text = element_text(family = "Helvetica"),
+        legend.text = element_text(family = "Helvetica"))
 
-ggplotly(dance)
+ggplotly(dance, tooltip = c("text", "color")) %>% 
+  layout(annotations = list(
+  text = "Relationship between the Global position in the Top 50 songs and the degree of danceability of each one",
+  x = 0,
+  y = 1.05,
+  xref = "paper",
+  yref = "paper",
+  showarrow = FALSE
+))
 ```
 
 Acousticness: 
 ```{r}
-acoustic <- top50full %>% 
-  ggplot(aes(x=Position, y=acousticness), text = paste(name...10)) +
-  geom_point() +
-  ylim(c(0, 1))
 
-ggplotly(acoustic)
+acoustic <- top50full %>% 
+  ggplot(aes(x=Position, y=acousticness, color = acousticness, text = paste0("Song: ", name...10))) +
+  geom_point() +
+  ylab("Speechiness") +
+  xlab("Position in the TOP 50") +
+  scale_color_gradient(low = "darkblue", high = "orange") +
+  ylim(c(0, 1)) +
+  theme_light() +
+  labs(title = "What about the acoustics?",
+       color = "Acousticness") +
+  theme(text = element_text(family = "Helvetica"),
+        legend.text = element_text(family = "Helvetica"))
+
+ggplotly(acoustic, tooltip = c("text", "color")) %>% 
+  layout(annotations = list(
+  text = "Relationship between the Global position in the Top 50 songs and the degree of acousticness of each one",
+  x = 0,
+  y = 1.05,
+  xref = "paper",
+  yref = "paper",
+  showarrow = FALSE
+))
 ```
 Speechiness: 
 
 ```{r}
-speech <- top50full %>% 
-  ggplot(aes(x=Position, y=speechiness), text = paste(name...10)) +
-  geom_point() +
-  ylim(c(0, 0.5))
 
-ggplotly(speech)
+
+speech <- top50full %>% 
+  ggplot(aes(x=Position, y=speechiness, color = speechiness, text = paste0("Song: ", name...10))) +
+  geom_point() +
+  ylab("Speechiness") +
+  xlab("Position in the TOP 50") +
+  scale_color_gradient(low = "darkblue", high = "orange") +
+  ylim(c(0, 0.5)) +
+  theme_light() +
+  labs(title = "You left me wordless!",
+       color = "Speechiness") +
+  theme(text = element_text(family = "Helvetica"),
+        legend.text = element_text(family = "Helvetica"))
+
+ggplotly(speech, tooltip = c("text", "color")) %>% 
+  layout(annotations = list(
+  text = "Relationship between the Global position in the Top 50 songs and the density of words in each one",
+  x = 0,
+  y = 1.05,
+  xref = "paper",
+  yref = "paper",
+  showarrow = FALSE
+))
 ```
 
 
@@ -387,7 +438,6 @@ viz4 <- ggplot(tracks2, aes(x=speechiness, fill=playlist,
   geom_density(alpha=0.7, color=NA)+
   scale_fill_manual(values=c("blue", "orange"))+
   labs(x="Danceability", y="Density") +
-  guides(fill=guide_legend(title="Playlist"))+
   xlim(c(0,0.5)) +
   theme_minimal()+
   ggtitle("Distribution of Danceability Data")
