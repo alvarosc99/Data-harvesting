@@ -503,7 +503,7 @@ comparison
 
 Which are the most penalized songs in comparison?
 
-```{r}
+```{r, fig.height=5}
 comparison %>% 
   ggplot(aes(y = Track_match, x=reference)) +
   geom_segment(aes(xend=Difference, yend = Track_match))
@@ -543,17 +543,19 @@ As the data is nested in a JSON within the body of the response we will need to 
 - Finally, we merge the two dataframes into a sigle one. 
 
 ```{r}
-followers = function(x) { 
-  rt_spotify = paste0(API_playlist, x) # Creating the URI for the requests
+
+#Intentar adaptar al formato req inicial, para estandarizar
+followers <- function(x) { 
+  rt_spotify <- paste0(API_playlist, x) # Creating the URI for the requests
   
-  resp_output = 
+  resp_output <- 
     rt_spotify %>% 
     request() %>% 
     req_auth_bearer_token(mytoken) %>% # Providing the token
     req_perform() %>% # Performing the request
     resp_body_json() # Obtaining the response body as a JSON file 
   
-  resp_followers = 
+  resp_followers <- 
     resp_output %>% 
     enframe() %>% # Creating the column-list dataframe
     filter(name == "followers") %>% # selecting only the followers node
@@ -562,14 +564,14 @@ followers = function(x) {
     select(-name) %>% # Selecting and renaming 
     rename("followers" = "value")
   
-  resp_name = resp_output %>% 
+  resp_name <- resp_output %>% 
     enframe() %>% # Creating column-list
     filter(name == "name") %>% # Filtering for the name of the playlist
     unnest(cols = value) %>% # Creating the dataframe 
     select(-name) %>% 
     rename("playlist" = "value")
     
-  df = cbind(resp_name, resp_followers) # Merging 
+  df <- cbind(resp_name, resp_followers) # Merging 
   }
 ```
 
@@ -578,8 +580,8 @@ Once we have defined our custom function, we will use lapply to create a loop th
 ```{r}
 years <- c(sixties, seventies, eighties, nineties, zeros, tens)
 
-followers_list = lapply(years, followers) 
-followers_df = do.call(rbind, followers_list) %>% transmute(
+followers_list <- lapply(years, followers) 
+followers_df <- do.call(rbind, followers_list) %>% transmute(
     playlist = as.character(playlist), 
     followers = as.numeric(followers))
 ```
@@ -589,7 +591,7 @@ followers_df = do.call(rbind, followers_list) %>% transmute(
 As we have now the data stored in a dataframe, we can easily plot them:
 
 ```{r}
-hp = ggplot(followers_df)+
+hp <- ggplot(followers_df)+
   aes(playlist, followers)+
   geom_col()
 
@@ -623,7 +625,7 @@ artists <- c(Rihanna, Drake, Eminem, LadyGaga,
             RollingStones, WhitneyHouston, TheBeatles, Cher,
             Beatles, Cher)
 
-API_tracks = "https://api.spotify.com/v1/audio-features/"
+API_tracks <- "https://api.spotify.com/v1/audio-features/"
 
 ```
 
@@ -641,7 +643,8 @@ features <- function(x) {
     req_auth_bearer_token(mytoken) %>% 
     req_perform() %>% 
     resp_body_json(simplifyVector = T) %>% 
-    as_tibble() 
+    as_tibble() ## Adaptar al formato req inicial, para estandarizar
+  
 }
 ```
 
