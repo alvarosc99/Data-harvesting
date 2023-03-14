@@ -783,9 +783,12 @@ features_plot
 
 #### 4.3. Combining features from historic songs
 
-As a final step, we may combine the utilities of the custom functions, the historical All Out playlist, and the analysis of the musical features to analysis the diferences in styles for the music for the different decades. 
+As a final step, we may combine the utilities of the custom functions, the historical All Out playlist, and the analysis of the musical features to analyse the differences in styles for the music for the different decades. 
 
 ##### Custom function
+
+The first task consists in obtaining all the ids of the All Out playlist, to look for their features. For that, we will use the third and final custom function follows the same logic as the previous one. First, we construct the request, by adding the endpoint. Then, once we have the JSON for the playlist information, we dig in into the nested key:value pairs until we get the vector with the ids. Also, for identification purposes, we rbind the id to the name of the list
+
 ```{r}
 features <- function(x) {
 
@@ -807,13 +810,20 @@ df <- cbind(all_out_ids, name)
 }
 ```
 
+Once we constructed the function, we can use lapply and do.call to run the fucntion for all the All Outs playlists and store them in a dataframe.
+
 ```{r}
 features_list <- lapply(years, features)
 features_df <- do.call(rbind, features_list)
-
-tracks_AO <- sample(features_df$id, 100)
-
 ```
+
+We will select only a sample of song, so we don't overload the request at the same time we are not having the computing rendering for a lot of time (taking into account the timeout and the throttle)
+
+```{r}
+tracks_AO <- sample(features_df$id, 100)
+```
+
+Then, we apply the loop created before for storing the information into a dataset. 
 
 ```{r}
 AOsongs <- data.frame()
@@ -832,7 +842,7 @@ for(i in 1:length(unique(tracks_AO))) { #We set the unique to avoid the features
 
 AOsongs
 ```
-
+We then remove the columns that do not add relevant information and rename the column of the name of the playlist.  
 
 ```{r}
 AO_Full <- AOsongs %>% 
@@ -840,28 +850,32 @@ AO_Full <- AOsongs %>%
   left_join(features_df, by = "id") %>% 
   dplyr::rename("playlist" = "name")
 ```
+The first visualization we may do with the set of data is to compare the energy transmitted by a song and it danceability: 
 
 ```{r}
 featuresAO_plot <- ggplot(AO_Full) +
-  aes(x = danceability, y = energy, colour = playlist) +
+  aes(x = energy, y = danceability, colour = playlist) +
   geom_point() +
   scale_size_area(max_size = 20)+
   theme_minimal()
 
 plotly::ggplotly(featuresAO_plot, tooltip=c("playlist"))
 ```
+When plotting the two variables together we find that there seem to be no linear relationship between danceability and energy. However, we do se that there is a tendency to be in the right part of the plot. 
+
 
 
 ```{r}
-viz5 <- ggplot(AO_Full, aes(x=danceability, fill=playlist,
+viz5 <- ggplot(AO_Full, aes(x=energy, fill=playlist,
                     text = paste(playlist)))+
   geom_density(alpha=0.7, color=NA)+
   scale_fill_manual(values=c("blue", "orange", "pink", "green", "grey", "red"))+
-  labs(x="Danceability", y="Density") +
+  labs(x="Energy", y="Density") +
   guides(fill=guide_legend(title="Playlist"))+
   xlim(c(0.25,1)) +
   theme_minimal()+
-  ggtitle("Distribution of Danceability Data")
+  ggtitle("Energy") +
+  facet_wrap(~playlist, ncol = 3)
 
 plotly::ggplotly(viz5, tooltip=c("text"))
 ```
