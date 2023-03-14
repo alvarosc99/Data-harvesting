@@ -1,6 +1,6 @@
-# Final Project: Insert title 
+# Spotify scraper for R
 
-## Spotify API 
+## Interacting with the Spotify API 
 
 ### Obtaining the credentials. 
 
@@ -29,23 +29,3 @@ Thus, the process can be summarised in:
 4. Link these two .txt to the .Rmd document, sepcifying where they're located.
 5. Run the code. 
  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
