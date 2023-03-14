@@ -11,6 +11,8 @@ Music nowadays is probably one of the most profitable industries in the world; a
 
 Therefore, the main objective of this work would be to analyse the differences in music. Using the Spotify Web API as a reference, we will try to analise the differences in popularity, genres or characteristics. In this line of reasoning, we also want to offer the user this scraper as a tool for users to visualize these mentioned global trends, which are the most popular songs and what characteristics do they have.
 
+First of all, these are the libraries we'll use:
+
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
 library(httr2)
@@ -24,6 +26,8 @@ library(stargazer)
 library(plotly)
 ```
 
+Before running the code, please make sure they are all installed in your computer.
+
 ## Setting the Spotify API Credential
 
 ### Creating the account and the app for developers.
@@ -34,8 +38,8 @@ Once we have our account, we are ready to register an app within the [Spotify fo
 
 The last step is to create two different .txt files, with this names:
 
--   client_id.txt
--   client_secret.txt
+-   *client_id.txt*
+-   *client_secret.txt*
 
 Please note where this files are located, as it's necessary for the next chunk.
 
@@ -343,7 +347,7 @@ ggplotly(speech, tooltip = c("text", "color")) %>%
 
 ### 2. Comparing top songs of different countries
 
-We already compared the Top 50 Global songs between them, and it gave us valuable information. But, what about different geographical contexts?
+We already compared the Top 50 Global songs between them, and it gave us valuable information. But, what about different geographical contexts? It's reasonable to think that some parameters may vary a lot from one country to another, so we'll run a similar analysis than the one conducted before, but taking as reference the Top songs for 2 different countries, in this case, Colombia and India. These are the IDs of their playlists:
 
 ```{r}
 top50colombia <- "37i9dQZEVXbL1Fl8vdBUba"
@@ -351,6 +355,8 @@ top50india <- "37i9dQZEVXbMWDif5SCBJq"
 ```
 
 #### Colombia
+
+Again, using our base request, we'll run a very similar code, just changing the target.
 
 ```{r}
 top50col <- req %>% 
@@ -365,6 +371,8 @@ top50col <- top50col$tracks$items %>%
 
 colsongs <- top50col$id
 ```
+
+Once we got all songs' names and IDs, let's run another loop to get the extensive information:
 
 ```{r}
 top50colsongs <- data.frame()
@@ -389,6 +397,8 @@ top50col <- top50col %>%
   select(c(name, id))
 ```
 
+One more time, let's join by songs' IDs and finish the dataframe:
+
 ```{r}
 top50colfull <- top50col %>% 
   full_join(top50colsongs, by = "id") %>% 
@@ -400,6 +410,8 @@ top50colfull
 ```
 
 #### India
+
+Now, let's repeat the same operation for the Indian context.
 
 ```{r}
 top50ind <- req %>% 
@@ -448,11 +460,13 @@ top50indfull <- top50ind %>%
 top50indfull
 ```
 
-Are there important differences in the distribution of this variables?
+Great! We now have 2 dataframes, one for each country, with the same variables. Notice we've created an additional one, with the playlist name for each, so that we're able to visualize the difference. Let's get to it!
 
 ```{r}
 tracks2 <- rbind(top50colfull, top50indfull)
 ```
+
+#### Danceability
 
 ```{r}
 dance <- ggplot(tracks2, aes(x=danceability, fill=playlist,
@@ -477,6 +491,8 @@ ggplotly(dance, tooltip=c("text")) %>%
   ))
 ```
 
+#### Valence
+
 ```{r}
 positive <- ggplot(tracks2, aes(x=valence, fill=playlist,
                     text = paste(playlist)))+
@@ -499,6 +515,8 @@ ggplotly(positive, tooltip=c("text")) %>%
     showarrow = FALSE
   ))
 ```
+
+#### Speechiness
 
 ```{r}
 speech <- ggplot(tracks2, aes(x=speechiness, fill=playlist,
@@ -523,33 +541,51 @@ ggplotly(speech, tooltip=c("text")) %>%
   ))
 ```
 
-### 3. Comparing TOP 50s. Spotify Vs. Billboard
+### 3. Comparing TOP 50s: Spotify Vs. Billboard
+
+When talking about the top charts and the most recognized tracks among the world, we may think in many different pages or sites where to look. In this scraper we've only used Tops offered by Spotify, but... Is there more beyond this platform? Our objective is to compare the top offered by Spotify with the Top presented by Billboard, another very important musical reference worldwide, to observe potential variations between both of them. Is there homogeneity on their classifications? Which artists are most penalized from one to another?
+
+First, let's get into the environment the chart we're looking for: The Global Top 200 songs.
 
 ```{r}
 billboard <- "https://www.billboard.com/charts/billboard-global-200/"
 browseURL(billboard)
 ```
 
+Through `read_html` and `xml_child`, we also save the HTML code of the page, so we can search for the elements we need.
+
 ```{r}
 billboard_raw <- read_html(billboard) %>% 
   xml_child()
 ```
 
-Songs:
+The first thing we need from the website is the list of the songs, ordered. Looking at the page, we notice that every text element containing the songs' names is located at this XPath and contains this attribute:
 
 ```{r}
 bill200 <- billboard_raw %>%
   xml_find_all("//li/ul/li/h3[@id = 'title-of-a-story']")
+
+bill200
 ```
+
+As we can see, the resulting nodeset is made up by 200 elements, which makes sense as the chart is 200 songs long. Let's look at them:
+
+```{r}
+bill200[1] %>% 
+  xml_text()
+```
+
+The actual name of the song is 'trapped' between all those characters, so let's remove them to leave only what we want.
 
 ```{r}
 billfilter <- bill200[1:50] %>% 
   xml_text() %>% 
   str_remove_all("\t|\n")
   
+billfilter
 ```
 
-Artists:
+That's it! We got all songs. Now let's do the same for the artists:
 
 ```{r}
 bill200art <- billboard_raw %>%
@@ -560,61 +596,98 @@ bill200art <- billboard_raw %>%
 billfilterart <- bill200art[1:50] %>% 
   xml_text() %>% 
   str_remove_all("\t|\n")
+
+billfilterart
 ```
 
-Merging both:
+Now, let's merge songs and artists, specifying the position of each song...
 
 ```{r}
 top50billboard <- billfilter %>% 
   as.data.frame() %>% 
   cbind(as.data.frame(billfilterart)) %>% 
-  rename("Track" = ".",
-         "Artist" = "billfilterart") %>% 
+  rename("track_name" = ".",
+         "artist" = "billfilterart") %>% 
   mutate(`Billboard Position` = row_number())
 
 top50billboard
 ```
 
-And take the positions from the Spotify Global 50:
+... and take the positions from the Spotify Global 50 too:
 
 ```{r}
 top50positions <- top50filtered %>% 
-  select(c(name...5, name...10)) %>% 
-  distinct(name...10, .keep_all = TRUE) %>% 
-  mutate(`Spotify Position` = row_number()) %>% 
-  rename("Artist" = "name...5", 
-         "Track" = "name...10")
+  select(c(artist, track_name)) %>% 
+  distinct(track_name, .keep_all = TRUE) %>% 
+  mutate(`Spotify Position` = row_number())
 
 top50positions
 ```
 
 ```{r}
 top50billboard %>% 
-  full_join(top50positions, by = c("Track"))
+  full_join(top50positions, by = c("artist"))
 ```
 
-Problem! There are some songs' names that differ slightly from one page to another. How can we fix this?
+Problem! There are some songs' names that differ slightly from one page to another. How can we fix this? We will use the `stringdist` function, which 'links' the most similar strings into a single observation.
+
+First, let's transform the names to make it easier for the tool:
 
 ```{r}
-top50billboard$Track_match <- sapply(top50billboard$Track, function(x) top50positions$Track[stringdist(x, top50positions$Track) == min(stringdist(x, top50positions$Track))])
-top50positions$Track_match <- sapply(top50positions$Track, function(x) top50billboard$Track[stringdist(x, top50billboard$Track) == min(stringdist(x, top50billboard$Track))])
-
-```
-
-```{r}
-top50billboard <- top50billboard %>% 
-  unnest()
-
 top50positions <- top50positions %>% 
-  unnest()
+  mutate(track_name = tolower(track_name),
+         track_name = str_replace_all(track_name, "[^[:alnum:][:space:]]", ""),
+         track_name = str_remove_all(track_name, "feat .*|with .*"))
 
-# full_join the data frames on the matched song names
-df_join <- dplyr::full_join(top50positions, top50billboard, by = c("Track_match" = "Track"))
+top50billboard <- top50billboard %>% 
+  mutate(track_name = tolower(track_name),
+         track_name = str_replace_all(track_name, "[^[:alnum:][:space:]]", ""),
+         track_name = str_remove_all(track_name, "feat .*|with .*"))
+```
+
+```{r}
+# create a new column to store the closest match
+top50billboard$Track_match <- NA
+top50positions$Track_match <- NA
+
+# loop over each track in the billboard data frame and find the closest match in the positions data frame
+for (i in 1:nrow(top50billboard)) {
+  match_index <- amatch(top50billboard$track_name[i], top50positions$track_name, maxDist = 6)
+  if (!is.na(match_index)) {
+    top50billboard$Track_match[i] <- top50positions$track_name[match_index]
+  }
+}
+
+# loop over each track in the positions data frame and find the closest match in the billboard data frame
+for (i in 1:nrow(top50positions)) {
+  match_index <- amatch(top50positions$track_name[i], top50billboard$track_name, maxDist = 6)
+  if (!is.na(match_index)) {
+    top50positions$Track_match[i] <- top50billboard$track_name[match_index]
+  }
+}
+
+
+```
+
+Let's take a look at the result: we now have a column named Track_match which contains the 'common' name of each song, so that both dataframes have the same.
+
+```{r}
+top50billboard
+```
+
+```{r}
+df_join <- top50billboard %>% 
+  na.omit() %>% 
+  full_join(top50positions, by = "Track_match") %>% 
+  na.omit() %>% 
+  distinct(Track_match, .keep_all = TRUE)
+
+df_join
 ```
 
 ```{r}
 comparison <- df_join %>% 
-  select(c(Artist.x, `Spotify Position`, `Billboard Position`, Track_match)) %>% 
+  select(c(artist.x, `Spotify Position`, `Billboard Position`, Track_match)) %>% 
   distinct(Track_match, .keep_all = TRUE) %>% 
   mutate(Difference = `Spotify Position` - `Billboard Position`,
          reference = 0, 
