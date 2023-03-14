@@ -861,9 +861,10 @@ featuresAO_plot <- ggplot(AO_Full) +
 
 plotly::ggplotly(featuresAO_plot, tooltip=c("playlist"))
 ```
+
 When plotting the two variables together we find that there seem to be no linear relationship between danceability and energy. However, we do se that there is a tendency to be in the right part of the plot. 
 
-
+Finally, using the same code as before for the danceability in the top50, we can plot the energy transmitted by decade. Also, apart from changing the variable, we will also add a facet wrap to visualize
 
 ```{r}
 viz5 <- ggplot(AO_Full, aes(x=energy, fill=playlist,
@@ -880,7 +881,7 @@ viz5 <- ggplot(AO_Full, aes(x=energy, fill=playlist,
 plotly::ggplotly(viz5, tooltip=c("text"))
 ```
 
-
+The plot shows the huge differences between decades. The songs of the 60s are indeed distributed in the first part of the scale, meaning that they could in fact be less energetic than the rest. Interestengly, for the song of the 00s decade there is a minimum amount of energy of the song:
 
 
 
