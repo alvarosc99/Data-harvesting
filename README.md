@@ -1,6 +1,6 @@
-# Final Project: Insert title 
+# Spotify scraper for R
 
-## Spotify API 
+## Interacting with the Spotify API 
 
 ### Obtaining the credentials. 
 
@@ -17,7 +17,7 @@ They should only include the respective information for each one, and nothing el
 
 Note: for an easier and quicker access to the API, place these into an easy directory, as you will later need to link them to the .Rmd. 
 
-Once this is done, just paste the directories in the chunks in lines XX and XX, andthe (Nombre archivo final) is ready to run, so that you can easily scrape Spotify's information. 
+Once this is done, just paste the directories in the chunks in lines 51 and 55, and the 'Spotify scraper.Rmd' will be ready to run, so that you can easily scrape Spotify's information. 
 
 ### Summary
 
@@ -29,23 +29,4 @@ Thus, the process can be summarised in:
 4. Link these two .txt to the .Rmd document, sepcifying where they're located.
 5. Run the code. 
  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

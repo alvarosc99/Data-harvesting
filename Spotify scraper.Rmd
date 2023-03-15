@@ -726,7 +726,11 @@ ggplotly(compviz, tooltip=c("Difference", "Artist"))
 
 #### 4.1. All out X0s
 
+<<<<<<< HEAD
 When comparing historic music, we will first resort to the Spotify-made playlists for the most famous songs of each decade (60s to 10s). In order to perform this specific request, we will need the specific URI for playlists and the particular IDs from each of them. Let's gather them:
+=======
+Finally, to compare historic music, we will first resort to the spotify-made playlists for the most famous songs of each decade (60s to 10s). In order to perform this specific request, we will need the specific URI for playlists and the particular IDs from each of them.
+>>>>>>> a1cff435cc9bcfb38812e3d5483c449bf62682fc
 
 ##### Playlists IDs
 
@@ -745,11 +749,19 @@ For this particular case, we have selected 6 different playlists, one for each d
 
 As the data is nested in a JSON within the body of the response we will need to apply again some techniques to read the data into a dataframe. However, contrary to previous points, we will use a function to extract the information in a single step. This custom function will perform the following tasks:
 
+<<<<<<< HEAD
 -   In the first place, we will create the specific URI for each playlist, via `req_url_path_append`.
 -   Secondly, we will perform the request, providing the personal token.
 -   Next, we will create a dataframe with a column list, for the information provided in the response. Within that dataframe, we will select only the row that contains information about the followers. Then, we will unnest this column to create a new dataframe.
 -   The new dataframe for followers contains a list with two values; a NULL and the actual figure. Then, we need to filter out the first and select and rename the columns that pertain to our query.
 -   We repeat the previous step for the node that contains the information of the name of the playlist. Luckily, this time the node only contains such name, so the `unnest` function serves to create a new one-row dataframe. Lastly, we change the name of the column for practical purposes.
+=======
+-   In the first place, we will create the specific URI for each playlist
+-   Secondly, we will perform the request, providing the personal token.
+-   Next, we will create a dataframe with a column list, for the information provided in the response. Within that dataframe, we will select only the row that contain information about the followers. Then, we will unnest this column to create a new dataframe.
+-   The new dataframe for followers contains a list with two values; a NULL and the actual figure. Then, we need to filter out the first and select and rename the columns that pertains to our query.
+-   We repeat the previous step for the node that contains the information of the name of the playlist. Luckily, this time the node only contains such name, so the unnest function serve to create a new one-row dataframe. Lastly, we change the name of the column for practical purposes.
+>>>>>>> a1cff435cc9bcfb38812e3d5483c449bf62682fc
 -   Finally, we merge the two dataframes into a single one.
 
 ```{r}
@@ -783,7 +795,7 @@ followers <- function(x) {
 }
 ```
 
-Once we have defined our custom function, we will use lapply to create a loop that would go over each individual playlist and extract the information. Then, thanks to the do.call function, we will merge all the figures into a single data frame.
+Once we have defined our custom function, we will use the `lapply` function to create a loop that would go over each individual playlist and extract the information. Then, thanks to the do.call function, we will merge all the figures into a single data frame.
 
 ```{r}
 years <- c(sixties, seventies, eighties, nineties, zeros, tens)
@@ -818,9 +830,13 @@ hp
 
 #### 4.2. Comparing music features on historic music
 
+<<<<<<< HEAD
 Similarly, we may create a custom function that enables us to obtain different musical features of different songs. Spotify indexes different characteristics for each song, such as the danceability, the energy or the tempo, the ones we previously used. Same as before, we could compare songs/artists from nowadays to older ones, according to this features.
 
 Then, we have selected the most liked song (in Spotify) from twelve artists, one men and one female, from each decade (60s to 10s). For function's purposes, we will store them already in a vector. Also, we will store the particular URI for the tracks' endpoint. Their IDs in Spotify are the following:
+=======
+Similarly, we may create a custom function that would enable us to obtain different musical features of different songs. Spotify indexes different characteristics for each song, such as the danceability, the energy or the tempo. Same as before, we could compare songs/artists from nowadays to older ones, according to this features. Then, we have selected the most liked song (in spotify) from twelve artists, one man and one female from each decade (60s to 10s). For function's purposes, we will store them already in a vector. Also, we will store the particular URI for the tracks' endpoint: Their IDs in spotify are the following:
+>>>>>>> a1cff435cc9bcfb38812e3d5483c449bf62682fc
 
 ```{r}
 Rihanna <- "49FYlytm3dAAraYgpoJZux"
@@ -844,7 +860,11 @@ artists <- c(Rihanna, Drake, Eminem, LadyGaga,
 
 ##### Custom function
 
+<<<<<<< HEAD
 The JSON returned in the request of the features is less nested. Therefore, the function is simpler. Similarly, we may use `simplifyVector = T` and `as.tibble` to have the key:value already stored as dataframes. Thus, the function will bear the request URI, the OAuth token and the storing specificities.
+=======
+The JSON returned in the request of the features is less nested. Therefore, the function is simpler. Similarly, we may use `simplifyVector = T` and `as.tibble` to have the key:value already stored as dataframes. Thus, the function will bear the request URI, the OAth token and the storing specificities.
+>>>>>>> a1cff435cc9bcfb38812e3d5483c449bf62682fc
 
 ```{r}
 features <- function(x) {
@@ -860,7 +880,7 @@ features <- function(x) {
 }
 ```
 
-Once we have the feature function, we will use *lapply* and *do.call* to perform the request for all the tracks and bind them together in a dataframe. For visualizing purposes, we will add a new colum specifiying the author of the particular songs:
+Once we have the feature function, we will use `lapply` and `do.call` to perform the request for all the tracks and bind them together in a dataframe. For visualizing purposes, we will add a new column specifying the author of the particular songs:
 
 ```{r}
 features_list <- lapply(artists, features)
@@ -943,7 +963,7 @@ df <- cbind(all_out_ids, name)
 }
 ```
 
-Once we constructed the function, we can use lapply and do.call to run the fucntion for all the All Outs playlists and store them in a dataframe.
+Once we constructed the function, we can use `lapply` and `do.call` to run the function for all the All Outs playlists and store them in a dataframe.
 
 ```{r}
 features_list <- lapply(years, features)
@@ -1001,9 +1021,13 @@ featuresAO_plot <- ggplot(AO_Full) +
 plotly::ggplotly(featuresAO_plot, tooltip=c("playlist"))
 ```
 
+<<<<<<< HEAD
 There it is! We may see a kind of 'funnel' pattern towards the higher tempo songs, which means that they all have somewhat high values for danceability (although they don't hold the highest ones).
 
 Finally, using the same code as before for the danceability in the top50, we can plot the energy transmitted by decade. Also, apart from changing the variable, we will also add a facet wrap to visualize
+=======
+When plotting the two variables together we find that there seem to be no linear relationship between danceability and energy. However, we do see that there is a tendency to be in the right part of the plot.Finally, using the same code as before for the danceability in the top50, we can plot the energy transmitted by decade. Also, apart from changing the variable, we will also add a facet wrap to visualize
+>>>>>>> a1cff435cc9bcfb38812e3d5483c449bf62682fc
 
 ```{r}
 viz5 <- ggplot(AO_Full, aes(x=energy, fill=playlist,
@@ -1020,8 +1044,12 @@ viz5 <- ggplot(AO_Full, aes(x=energy, fill=playlist,
 plotly::ggplotly(viz5, tooltip=c("text"))
 ```
 
+<<<<<<< HEAD
 The plot shows the huge differences between decades, and a clear evolution. The songs of the 60s are indeed distributed in the first part of the scale, meaning that they could in fact be less energetic than the rest, and each 10 years the general distribution of the energy is more and more skewed to the right. Nice lesson!
 
 ## Summary
 
 In the present scraper, we've analyzed the most recent musical trends, how geographical contexts may affect a lot on musical features, the level of 'disagreement' between different websites on which songs are in the Top 50, and how music is given a certain importance depending on its release date, along with how it's changed over time. The possibilities the Spotify API offers users are very broad and there is much room to explore, so we encourage users to explore on their own and make their own requests in the space below this comments. Remember to use the `req` base request, and to check in the *Spotify player* each track/playlist/album/artist's ID.
+=======
+The plot above shows the huge differences between decades. The songs of the 60s are indeed distributed in the first part of the scale, meaning that they could in fact be less energetic than the rest. Interestengly, for the song of the 00s decade there is a minimum amount of energy of the song:
+>>>>>>> a1cff435cc9bcfb38812e3d5483c449bf62682fc
