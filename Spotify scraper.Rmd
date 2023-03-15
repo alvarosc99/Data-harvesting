@@ -827,7 +827,7 @@ hp <- ggplot(followers_df)+
 
 hp
 ```
-
+As we can see in the plot above, the first two decades do not hase subtantial number of followers compare to the others. On the contrary, the 80s and the 00s stands out. As a brief analysis, we may assess that nostalgia is playing a part. 
 #### 4.2. Comparing music features on historic music
 
 <<<<<<< HEAD
@@ -933,6 +933,8 @@ features_plot <- ggplot(features_df) +
 features_plot
 
 ```
+
+The plot above show that the songs for the authors of the 90s and the 00s possess the more energetic and danceable songs. On the contrary, Rolling Stones or The Beatles seem to not be as danceable. However, reusing the previous code we may extend the analysis. 
 
 #### 4.3. Combining features from historic songs
 
