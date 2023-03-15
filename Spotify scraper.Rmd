@@ -48,11 +48,11 @@ Please note where this files are located, as it's necessary for the next chunk.
 Once we have created our account and our Spotify App for developers, we will have to look for our Client ID and Client Secret. They are shown in the dashboard of the App:
 
 ```{r}
-client_ID <- scan("C:/Users/alvar/Desktop/client_id.txt", what = character()) # Enter the correct path where the client_id is located. Note: in R, the "\" symbol is not supported. Instead, use "/".
+client_ID <- scan("/client_id.txt", what = character()) # Enter the correct path where the client_id is located. Note: in R, the "\" symbol is not supported. Instead, use "/".
 ```
 
 ```{r}
-client_secret <- scan("C:/Users/alvar/Desktop/client_secret.txt", what = character()) # Enter the correct path where the client_secret is located. Note: in R, the "\" symbol is not supported. Instead, use "/".
+client_secret <- scan("/client_secret.txt", what = character()) # Enter the correct path where the client_secret is located. Note: in R, the "\" symbol is not supported. Instead, use "/".
 ```
 
 ### Creating the personal OAuth 2.0 token for requests
